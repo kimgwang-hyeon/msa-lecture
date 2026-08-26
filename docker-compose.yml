@@ -119,17 +119,17 @@ services:
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
       - SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI=http://auth-server:9000/oauth2/jwks
       - SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI=http://localhost:8080
-      # 사전 제공 Gateway 이미지의 기존 경로는 유지하고 목적지만 GearHub 서비스명으로 변경
-      - SPRING_CLOUD_GATEWAY_ROUTES_1_ID=member-service
-      - SPRING_CLOUD_GATEWAY_ROUTES_1_URI=lb://member-service
-      - SPRING_CLOUD_GATEWAY_ROUTES_2_ID=asset-service
-      - SPRING_CLOUD_GATEWAY_ROUTES_2_URI=lb://asset-service
-      - SPRING_CLOUD_GATEWAY_ROUTES_3_ID=request-service
-      - SPRING_CLOUD_GATEWAY_ROUTES_3_URI=lb://request-service
-      - SPRING_CLOUD_GATEWAY_ROUTES_4_ID=budget-service
-      - SPRING_CLOUD_GATEWAY_ROUTES_4_URI=lb://budget-service
-      - SPRING_CLOUD_GATEWAY_ROUTES_5_ID=alternative-service
-      - SPRING_CLOUD_GATEWAY_ROUTES_5_URI=lb://alternative-service
+      # 복합 List 설정은 인덱스형 환경변수 대신 JSON으로 한 번에 전달한다.
+      # 제공 Gateway 이미지의 기본 routes 배열과 Spring Boot 바인딩 호환성을 유지한다.
+      - >-
+        SPRING_APPLICATION_JSON={"spring":{"cloud":{"gateway":{"routes":[
+        {"id":"auth-server","uri":"lb://auth-server","predicates":["Path=/oauth2/**,/login,/login/**,/logout,/userinfo,/error,/default-ui.css,/favicon.ico,/.well-known/openid-configuration,/.well-known/oauth-authorization-server"],"filters":["RewritePath=/(?<segment>.*), /$${segment}","PreserveHostHeader"]},
+        {"id":"member-service","uri":"lb://member-service","predicates":["Path=/api/users/**"],"filters":["RewritePath=/api/users/(?<segment>.*), /api/users/$${segment}"]},
+        {"id":"asset-service","uri":"lb://asset-service","predicates":["Path=/api/courses/**"],"filters":["RewritePath=/api/courses/(?<segment>.*), /api/courses/$${segment}"]},
+        {"id":"request-service","uri":"lb://request-service","predicates":["Path=/api/enrollments/**"],"filters":["RewritePath=/api/enrollments/(?<segment>.*), /api/enrollments/$${segment}"]},
+        {"id":"budget-service","uri":"lb://budget-service","predicates":["Path=/api/payments/**"],"filters":["RewritePath=/api/payments/(?<segment>.*), /api/payments/$${segment}"]},
+        {"id":"alternative-service","uri":"lb://alternative-service","predicates":["Path=/api/recommend/**"],"filters":["RewritePath=/api/recommend/(?<segment>.*), /api/recommend/$${segment}"]}
+        ]}}}}
     depends_on:
       eureka-server:
         condition: service_healthy
