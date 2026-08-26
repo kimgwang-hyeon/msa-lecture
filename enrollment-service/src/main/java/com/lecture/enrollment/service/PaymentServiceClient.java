@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 
@@ -16,6 +17,9 @@ public class PaymentServiceClient {
 
     private final WebClient.Builder webClientBuilder;
 
+    @Value("${service.budget-service.url}")
+    private String budgetServiceUrl;
+
     /**
      * Payment Service: 결제 요청 (동기 REST)
      */
@@ -25,7 +29,7 @@ public class PaymentServiceClient {
 
             PaymentResult result = webClientBuilder.build()
                     .post()
-                    .uri("http://budget-service:8084/api/payments/internal/request")
+                    .uri(budgetServiceUrl + "/api/payments/internal/request")
                     .bodyValue(request)
                     .retrieve()
                     .bodyToMono(PaymentResult.class)

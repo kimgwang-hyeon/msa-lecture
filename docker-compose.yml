@@ -68,6 +68,8 @@ services:
     ports:
       - "8761:8761"
     environment:
+      - SERVER_PORT=8761
+      - EUREKA_INSTANCE_HOSTNAME=eureka-server
       - SPRING_PROFILES_ACTIVE=docker
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:8761/actuator/health"]
@@ -87,6 +89,7 @@ services:
     ports:
       - "9000:9000"
     environment:
+      - SERVER_PORT=9000
       - SPRING_PROFILES_ACTIVE=docker
       - SPRING_DATASOURCE_URL=jdbc:mariadb://lecturedb:3306/lecture_db
       - SPRING_DATASOURCE_USERNAME=manager
@@ -115,21 +118,12 @@ services:
     ports:
       - "8080:8080"
     environment:
+      - SERVER_PORT=8080
       - SPRING_PROFILES_ACTIVE=docker
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
       - SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI=http://auth-server:9000/oauth2/jwks
       - SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI=http://localhost:8080
-      # 사전 제공 Gateway 이미지의 기존 경로는 유지하고 목적지만 GearHub 서비스명으로 변경
-      - SPRING_CLOUD_GATEWAY_ROUTES_1_ID=member-service
-      - SPRING_CLOUD_GATEWAY_ROUTES_1_URI=lb://member-service
-      - SPRING_CLOUD_GATEWAY_ROUTES_2_ID=asset-service
-      - SPRING_CLOUD_GATEWAY_ROUTES_2_URI=lb://asset-service
-      - SPRING_CLOUD_GATEWAY_ROUTES_3_ID=request-service
-      - SPRING_CLOUD_GATEWAY_ROUTES_3_URI=lb://request-service
-      - SPRING_CLOUD_GATEWAY_ROUTES_4_ID=budget-service
-      - SPRING_CLOUD_GATEWAY_ROUTES_4_URI=lb://budget-service
-      - SPRING_CLOUD_GATEWAY_ROUTES_5_ID=alternative-service
-      - SPRING_CLOUD_GATEWAY_ROUTES_5_URI=lb://alternative-service
+      # 사전 제공 Gateway 이미지의 기존 라우트와 서비스명을 그대로 사용
     depends_on:
       eureka-server:
         condition: service_healthy
@@ -149,6 +143,8 @@ services:
     ports:
       - "8081:8081"
     environment:
+      - SERVER_PORT=8081
+      - SPRING_APPLICATION_NAME=user-service
       - SPRING_PROFILES_ACTIVE=docker
       - SPRING_DATASOURCE_URL=jdbc:mariadb://lecturedb:3306/lecture_db
       - SPRING_DATASOURCE_USERNAME=manager
@@ -174,6 +170,8 @@ services:
     ports:
       - "8082:8082"
     environment:
+      - SERVER_PORT=8082
+      - SPRING_APPLICATION_NAME=course-service
       - SPRING_PROFILES_ACTIVE=docker
       - SPRING_DATASOURCE_URL=jdbc:mariadb://lecturedb:3306/lecture_db
       - SPRING_DATASOURCE_USERNAME=manager
@@ -181,6 +179,7 @@ services:
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
       - SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI=http://auth-server:9000/oauth2/jwks
       - SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI=http://auth-server:9000
+      - MEMBER_SERVICE_URL=http://member-service:8081
     depends_on:
       mariadb:
         condition: service_healthy
@@ -199,6 +198,8 @@ services:
     ports:
       - "8083:8083"
     environment:
+      - SERVER_PORT=8083
+      - SPRING_APPLICATION_NAME=enrollment-service
       - SPRING_PROFILES_ACTIVE=docker
       - SPRING_DATASOURCE_URL=jdbc:mariadb://lecturedb:3306/lecture_db
       - SPRING_DATASOURCE_USERNAME=manager
@@ -207,6 +208,8 @@ services:
       - SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI=http://auth-server:9000/oauth2/jwks
       - SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI=http://auth-server:9000
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - ASSET_SERVICE_URL=http://asset-service:8082
+      - BUDGET_SERVICE_URL=http://budget-service:8084
     depends_on:
       mariadb:
         condition: service_healthy
@@ -227,6 +230,8 @@ services:
     ports:
       - "8084:8084"
     environment:
+      - SERVER_PORT=8084
+      - SPRING_APPLICATION_NAME=payment-service
       - SPRING_PROFILES_ACTIVE=docker
       - SPRING_DATASOURCE_URL=jdbc:mariadb://lecturedb:3306/lecture_db
       - SPRING_DATASOURCE_USERNAME=manager
@@ -255,8 +260,9 @@ services:
     ports:
       - "8085:8085"
     environment:
+      - APP_PORT=8085
       - EUREKA_SERVER_URL=http://eureka-server:8761/eureka
-      - APP_NAME=alternative-service
+      - APP_NAME=recommend-service
       - EUREKA_INSTANCE_HOST=alternative-service
       - JWT_ISSUER_URI=http://localhost:8080
       - JWK_SET_URI=http://auth-server:9000/oauth2/jwks

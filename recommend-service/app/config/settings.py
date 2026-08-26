@@ -15,7 +15,7 @@ class Settings(BaseSettings):
 
     # Auth Server
     jwt_issuer_uri: str = "http://localhost:8080"
-    jwk_set_uri: str = "http://auth-server:9000/oauth2/jwks"
+    jwk_set_uri: str = "http://localhost:9000/oauth2/jwks"
 
     # 서비스 URL
     enrollment_service_url: str = "http://localhost:8083"

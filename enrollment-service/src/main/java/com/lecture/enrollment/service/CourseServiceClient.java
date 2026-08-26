@@ -3,6 +3,7 @@ package com.lecture.enrollment.service;
 import com.lecture.enrollment.dto.EnrollmentDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -17,6 +18,9 @@ public class CourseServiceClient {
 
     private final WebClient.Builder webClientBuilder;
 
+    @Value("${service.asset-service.url}")
+    private String assetServiceUrl;
+
     /**
      * Course Service: 강의 존재 여부 확인 (동기 REST)
      */
@@ -24,7 +28,7 @@ public class CourseServiceClient {
         try {
             Boolean exists = webClientBuilder.build()
                     .get()
-                    .uri("http://asset-service/api/courses/internal/exists/{id}", courseId)
+                    .uri(assetServiceUrl + "/api/courses/internal/exists/{id}", courseId)
                     .retrieve()
                     .bodyToMono(Boolean.class)
                     .block();
@@ -46,7 +50,7 @@ public class CourseServiceClient {
         try {
             Map<String, Object> responseBody = webClientBuilder.build()
                     .get()
-                    .uri("http://asset-service/api/courses/internal/{id}", courseId)
+                    .uri(assetServiceUrl + "/api/courses/internal/{id}", courseId)
                     .retrieve()
                     .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
                     .block();
@@ -97,7 +101,7 @@ public class CourseServiceClient {
         try {
             webClientBuilder.build()
                     .post()
-                    .uri("http://asset-service/api/courses/internal/{id}/enrollment-count", courseId)
+                    .uri(assetServiceUrl + "/api/courses/internal/{id}/enrollment-count", courseId)
                     .retrieve()
                     .toBodilessEntity()
                     .block();
@@ -116,7 +120,7 @@ public class CourseServiceClient {
         try {
             webClientBuilder.build()
                     .post()
-                    .uri("http://asset-service/api/courses/internal/{id}/borrow", courseId)
+                    .uri(assetServiceUrl + "/api/courses/internal/{id}/borrow", courseId)
                     .retrieve()
                     .toBodilessEntity()
                     .block();
@@ -150,7 +154,7 @@ public class CourseServiceClient {
         try {
             Map<String, Object> responseBody = webClientBuilder.build()
                     .post()
-                    .uri("http://asset-service/api/courses")
+                    .uri(assetServiceUrl + "/api/courses")
                     .header("X-User-Id", String.valueOf(userId))
                     .bodyValue(body)
                     .retrieve()
