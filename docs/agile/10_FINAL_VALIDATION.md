@@ -2,186 +2,239 @@
 
 검증 기준일: 2026-08-27 (Asia/Seoul)
 
-이 문서는 구현했다고 추정한 항목이 아니라 로컬 Docker 환경에서 실제로 실행해 확인한 결과를 기록한다. 최종 시드는 `seed=42`를 사용했다.
+이 문서는 현재 브랜치의 Docker 환경과 고정 seed 42에서 실제로 확인한 결과다.
 
 ## 1. 실행 상태
 
-`docker compose up -d --build` 후 다음 11개 컨테이너가 모두 실행 중임을 확인했다.
+docker compose ps 재확인 결과 11개 컨테이너가 모두 running 상태다.
 
-| 구분 | 컨테이너 | 공개 포트 |
-|---|---|---:|
-| Web | `gearhub-frontend` | 3000 |
-| Gateway | `lecture-gateway` | 8080 |
-| Auth | `lecture-auth` | 9000 |
-| Discovery | `lecture-eureka` | 8761 |
-| Member | `gearhub-member` | 8081 |
-| Asset | `gearhub-asset` | 8082 |
-| Request | `gearhub-request` | 8083 |
-| Budget | `gearhub-budget` | 8084 |
-| Analytics | `gearhub-alternative` | 8085 |
-| Kafka | `lecture-kafka` | 9092 |
-| MariaDB | `lecturedb` | 3379 |
+| 구분 | Compose 서비스 | 컨테이너 | 공개 포트 |
+|---|---|---|---:|
+| Web | frontend | gearhub-frontend | 3000 |
+| Gateway | api-gateway | lecture-gateway | 8080 |
+| Auth | auth-server | lecture-auth | 9000 |
+| Discovery | eureka-server | lecture-eureka | 8761 |
+| Member | member-service | gearhub-member | 8081 |
+| Asset | asset-service | gearhub-asset | 8082 |
+| Request | request-service | gearhub-request | 8083 |
+| Budget | budget-service | gearhub-budget | 8084 |
+| Demand Analytics | alternative-service | gearhub-alternative | 8085 |
+| Kafka | kafka | lecture-kafka | 9092 |
+| MariaDB | mariadb | lecturedb | 3379 |
 
 확인 명령:
 
-```powershell
+~~~powershell
 docker compose ps
-```
+~~~
 
-## 2. 재현 가능한 데모 데이터
+Eureka에서 다음 7개 애플리케이션이 UP으로 등록된 것을 확인했다.
 
-```powershell
+- ALTERNATIVE-SERVICE
+- API-GATEWAY
+- ASSET-SERVICE
+- AUTH-SERVER
+- BUDGET-SERVICE
+- MEMBER-SERVICE
+- REQUEST-SERVICE
+
+## 2. 재현 가능한 시드
+
+~~~powershell
 docker compose exec -T alternative-service python scripts/seed_demo_data.py
-```
+~~~
 
-최종 출력:
+기준 출력:
 
-```text
+~~~text
 운영 데이터: groups=8, assets=120, loans=200, acquisitions=8
 분석 데이터: events=10814, model=hist_gradient_boosting
 기준선 WAPE=70.3414, 모델 WAPE=55.7159
-```
+~~~
 
-DB 검증 결과:
+DB 재확인 결과:
 
 | 항목 | 결과 |
 |---|---:|
 | 활성 그룹 | 8 |
-| 대여 가능 데모 자산 | 120 |
-| 운영 화면용 대여 요청 | 200 |
-| 도입 요청 | 8 |
-| 시뮬레이션 분석 이벤트 | 10,814 |
-| Kafka로 수집한 LIVE 이벤트 | 1 이상 |
-| 4주 예측 행 | 224 |
-| 음수 또는 총수량 초과 재고 | 0 |
+| 데모 OWNED 자산 | 120 |
+| 운영 LOAN 요청 | 200 |
+| PURCHASE 도입 요청 | 8 |
+| SIMULATION 분석 이벤트 | 10,814 |
+| LIVE 분석 이벤트 | 1 |
+| 최신 실행의 4주 예측 행 | 224 |
+| availableQuantity가 0 미만인 자산 | 0 |
+| availableQuantity가 totalQuantity를 넘는 자산 | 0 |
 
-시드 스크립트는 자신이 만든 `https://demo.gearhub.local/` 표시 데이터만 교체한다. 분석 이력은 `SIMULATION` 소스만 삭제하므로 운영 중 수집한 `LIVE` 이벤트는 남는다.
+시드는 demo.gearhub.local 표시 데이터를 대상으로 하며 SIMULATION만 교체한다. Kafka로 수집된 LIVE 이벤트는 보존한다.
 
-## 3. AI 평가 결과
+## 3. AI 평가
+
+최신 analytics_forecast_runs 행:
 
 | 항목 | 결과 |
 |---|---:|
 | 데이터 기간 | 2025-03-03 ~ 2026-08-24 |
 | 이벤트 수 | 10,814 |
-| 학습 행 | 3,248 |
+| 학습·개발 행 | 3,248 |
 | 테스트 행 | 672 |
-| 선택 모델 | Histogram Gradient Boosting |
+| 선택 모델 | hist_gradient_boosting |
 | 기준선 MAE | 1.4717 |
 | 모델 MAE | 1.1657 |
 | 기준선 WAPE | 70.3414% |
 | 모델 WAPE | 55.7159% |
 | WAPE 개선율 | 20.79% |
 
-컴퓨터공학과 화면에서는 7개 카테고리 중 3개가 부족으로 계산되었고, 부속품·전자/IoT·메이커 장비에 대해 다른 그룹에서 먼저 이동할 수 있는 수량이 함께 표시됐다. 즉 모델 결과가 단순 차트로 끝나지 않고 재고 이동 또는 도입 검토라는 관리자 행동으로 연결되는 것을 확인했다.
+Poisson, Random Forest, Histogram Gradient Boosting을 시간순 검증 구간에서 비교한 뒤 Histogram Gradient Boosting을 선택했다. 마지막 테스트 구간에서 최근 4주 이동평균 기준선보다 MAE와 WAPE가 모두 낮았다.
 
-## 4. 업무 흐름 통합 검증
+컴퓨터공학과 예측 화면에서는 7개 카테고리와 4주 주간값이 표시되고, 부족 카테고리에는 다른 그룹의 계획상 이동 가능 수량이 함께 표시됐다.
 
-### 대여·반납
+## 4. 대여·반납 통합 검증
 
-임시 요청을 생성해 다음 상태와 재고 변화를 실제 API로 확인했다.
+실제 API로 다음 상태와 재고 변화를 확인했다.
 
-```text
-신청 PENDING
-→ 그룹 관리자 승인 ACTIVE: 가용 재고 1 감소
-→ 구성원 반납 요청 RETURN_REQUESTED: 재고 변화 없음
-→ 관리자 반납 확인 RETURNED: 가용 재고 1 복구
-```
+~~~text
+대여 신청 PENDING
+→ 그룹 관리자 승인 ACTIVE
+→ availableQuantity 1 감소
+→ 구성원 반납 요청 RETURN_REQUESTED
+→ availableQuantity 변화 없음
+→ 관리자 반납 확인 RETURNED
+→ availableQuantity 1 복구
+~~~
 
-검증 요청 ID는 테스트 시점의 `225`였으며, 최종 시드 재실행으로 운영 데모 데이터는 다시 200건으로 정리했다.
+추가로 확인한 실패 조건:
 
-### 도입·예산·입고
+- 다른 그룹의 GROUP 자산 대여 거부
+- 가용 수량 0인 자산 승인 거부
+- 최대 대여일 초과 거부
+- 본인이 아닌 대여의 반납 요청 거부
+- RETURN_REQUESTED가 아닌 요청의 반납 확인 거부
 
-임시 도입 요청으로 다음 서비스 연결을 확인했다.
+검증용 임시 행은 최종 시드 재실행으로 데모 기준 200건에 맞췄다.
 
-```text
-Request PENDING
+## 5. 도입·예산·입고 통합 검증
+
+실제 서비스와 Kafka를 통해 다음 흐름을 확인했다.
+
+~~~text
+Request PURCHASE / PENDING
+→ Asset PURCHASE_REQUEST / INACTIVE
 → 그룹 승인 GROUP_APPROVED
-→ Budget COMPLETED
+→ Budget PENDING
+→ 학교 예산 승인 COMPLETED
 → Kafka payment.completed
 → Request BUDGET_APPROVED
-→ 입고 RECEIVED
-→ Asset OWNED / ACTIVE, 가용 수량 2
-```
+→ 그룹 관리자 입고 확인 RECEIVED
+→ Asset OWNED / ACTIVE
+→ totalQuantity와 availableQuantity에 입고 수량 반영
+~~~
 
-검증 요청 ID는 테스트 시점의 `409`였다. 이 데이터도 최종 시드 재실행으로 정리했다.
+예산 반려 시 Budget가 FAILED가 되고 payment.completed 이벤트를 받은 Request가 REJECTED로 바뀌는 계약은 자동 테스트와 코드 경로로 확인했다.
 
-### Kafka 분석 이벤트
+## 6. Kafka 분석 이벤트
 
-대여 요청 이벤트의 Java `LocalDate / LocalDateTime` 배열 직렬화 형식을 Analytics Consumer가 날짜로 변환하는 것을 확인했다. 임시 요청 `417`의 `REQUESTED` 이벤트가 `analytics_loan_events.source='LIVE'`로 1건 저장됐고 Consumer 로그에 오류가 없었다.
+Request의 rental.lifecycle 이벤트가 Demand Analytics에 저장되는 것을 확인했다.
 
-## 5. 자동 테스트와 빌드
+- source: LIVE
+- eventId 기본키 기반 upsert
+- Java LocalDate와 LocalDateTime의 배열 직렬화 형식 변환
+- REQUESTED 이벤트의 groupId, category, quantity, loanDays 저장
+- Consumer 로그 오류 없음
+
+현재 DB에 LIVE 이벤트 1건이 남아 있어 시드 재실행 후에도 운영 이력이 보존됨을 확인했다.
+
+## 7. 자동 테스트와 빌드
 
 ### Spring 서비스
 
-Docker의 MariaDB와 Kafka를 사용하도록 로컬 포트를 지정한 뒤 Member, Asset, Request, Budget 네 서비스의 전체 Gradle 테스트가 모두 성공했다.
+호스트 테스트용 환경변수:
 
-```powershell
+~~~powershell
 $env:SPRING_DATASOURCE_URL='jdbc:mariadb://localhost:3379/lecture_db'
 $env:SPRING_DATASOURCE_USERNAME='manager'
 $env:SPRING_DATASOURCE_PASSWORD='SqlDba-1'
 $env:SPRING_KAFKA_BOOTSTRAP_SERVERS='localhost:9092'
 .\gradlew.bat test --no-daemon
-```
+~~~
 
-위 명령은 각 서비스 디렉터리에서 실행한다. Docker 내부 기본 호스트명은 `lecturedb`, `kafka`이므로 호스트 테스트에서는 환경변수 지정이 필요하다.
+각 서비스 디렉터리에서 실행한 결과:
 
-결과:
+| 서비스 | 결과 |
+|---|---|
+| user-service / Member | BUILD SUCCESSFUL |
+| course-service / Asset | BUILD SUCCESSFUL |
+| enrollment-service / Request | BUILD SUCCESSFUL |
+| payment-service / Budget | BUILD SUCCESSFUL |
 
-- Member Service: `BUILD SUCCESSFUL`
-- Asset Service: `BUILD SUCCESSFUL`
-- Request Service: `BUILD SUCCESSFUL`
-- Budget Service: `BUILD SUCCESSFUL`
+### Demand Analytics
 
-### Analytics
-
-```powershell
+~~~powershell
 docker compose exec -T alternative-service python -m pytest -q
-```
+~~~
 
-결과: `4 passed`. 예측 시간순 분할·4주 출력, 시뮬레이션, Kafka 이벤트 변환, 날짜 저장을 검증한다. Pydantic·SciPy·pandas의 향후 폐기 예정 경고는 남아 있지만 테스트 실패나 런타임 오류는 아니다.
+결과: 4 passed.
+
+검증 범위는 시간순 분할과 4주 출력, 시뮬레이션, Kafka 이벤트 변환, 날짜 저장이다. Pydantic·SciPy·pandas의 향후 폐기 예정 경고는 테스트 실패가 아니다.
 
 ### Frontend
 
-```powershell
-cd vue-frontend
+~~~powershell
+Set-Location vue-frontend
 npm ci
 npm run build
-```
+npm audit --omit=dev
+~~~
 
-결과: 보안 패치된 Axios 1.20.0 기준으로 Vite가 125개 모듈을 변환하고 production build를 성공했다. `npm audit --omit=dev` 결과는 취약점 0건이다.
+결과:
 
-## 6. 브라우저 사용자 흐름
+- Vite production build 성공
+- 125개 모듈 변환
+- Axios 1.20.0
+- production dependency 취약점 0건
 
-실제 인앱 브라우저로 다음을 확인했다.
+## 8. 브라우저 사용자 흐름
 
-1. `http://localhost:3000`의 문서 제목과 랜딩 브랜드가 `GearHub Campus`로 표시된다.
-2. `campus.admin@demo.local` 계정으로 Auth Server 로그인에 성공한다.
-3. 로그인 후 `/groups`에서 8개 그룹과 관리자 역할이 표시된다.
-4. `/groups/1`에서 컴퓨터공학과, 자산 36개, 구성원 수, 초대코드가 표시된다.
-5. `/groups/1/analytics`에서 모델 평가와 7개 카테고리의 4주 예측이 표시된다.
-6. 부족 카테고리와 그룹 간 이동 제안이 실제 재고와 함께 렌더링된다.
+실제 브라우저에서 확인한 항목:
 
-최종 확인을 위해 AI 수요예측 탭을 열린 상태로 두었다.
+1. http://localhost:3000의 제목과 랜딩 브랜드가 GearHub Campus다.
+2. campus.admin@demo.local로 Auth Server 로그인이 된다.
+3. /groups에서 8개 그룹과 관리자 역할이 보인다.
+4. /groups/1에서 컴퓨터공학과 정보와 자산·구성원·초대코드가 보인다.
+5. /groups/1/assets에서 공용·그룹 자산과 수량이 보인다.
+6. /groups/1/admin에서 대여와 도입 요청을 검토할 수 있다.
+7. /groups/1/analytics에서 평가 지표와 7개 카테고리의 4주 예측이 보인다.
+8. 부족 수량과 그룹 간 이동 제안이 재고 정보와 함께 렌더링된다.
 
-## 7. 발표용 5분 데모 순서
+## 9. 데모 계정
 
-1. 랜딩에서 “학교 공용 + 그룹 전용 자산” 문제를 20초 안에 설명한다.
-2. 관리자 계정으로 로그인해 8개 동적 그룹을 보여준다.
-3. 컴퓨터공학과 자산 카탈로그에서 보유 수량·가용 수량·대여기간을 보여준다.
-4. 구성원 계정의 대여 신청을 만들고 관리자 승인 후 재고가 줄어드는 것을 보여준다.
-5. 반납 요청과 관리자 확인 후 재고가 복구되는 것을 보여준다.
-6. 미보유 장비 요청의 그룹 승인 → 예산 승인 → 입고 흐름을 상태 다이어그램으로 설명한다.
-7. AI 화면에서 기준선과 모델 WAPE를 먼저 보여준 뒤, 부족 3개와 이동 제안을 보여준다.
-8. “생성형 API를 붙인 것이 아니라 우리 대여 이력을 scikit-learn으로 비교·검증해 관리자 행동으로 연결했다”로 마무리한다.
+| 역할 | 이메일 | 비밀번호 |
+|---|---|---|
+| 학교·그룹 관리자 | campus.admin@demo.local | GearHub123! |
+| 일반 구성원 | campus.member@demo.local | GearHub123! |
 
-데모 직전에는 시드 명령을 한 번 실행하면 화면 상태를 일정하게 되돌릴 수 있다.
+이 계정은 로컬 교육용 데이터에만 사용한다.
 
-## 8. 남은 MVP 한계
+## 10. 최종 판정
 
-- 현재는 한 학교 안의 멀티그룹이며 여러 학교의 데이터 격리는 구현하지 않았다.
-- 날짜가 겹치는 미래 예약의 수량을 별도 캘린더로 계산하지 않는다.
-- 도입은 실제 발주·배송 시스템과 연결되지 않는다.
-- 자산 개별 시리얼, 손상·수리·분실 처리는 없다.
-- 내부 서비스 API의 별도 서비스 인증과 완전한 감사로그는 제품화 단계가 필요하다.
-- 프론트 OAuth는 제공 실습 Auth Server 호환을 우선했다. 운영 제품에서는 PKCE 또는 BFF로 브라우저에 client secret을 두지 않아야 한다.
-- 현재 AI 수치는 합성 이력으로 기능과 평가 방법을 검증한 결과다. 실제 운영 판단 전에는 실제 데이터로 재학습·재검증해야 한다.
+| 영역 | 판정 |
+|---|---|
+| 한 학교·멀티그룹 제품 흐름 | PASS |
+| 대여·반납 재고 정합성 | PASS |
+| 도입·예산·입고 MSA 연결 | PASS |
+| Kafka 이벤트 연결 | PASS |
+| 관리자 수요예측과 기준선 비교 | PASS |
+| Docker 재현성 | PASS |
+| 자동 테스트와 프론트 빌드 | PASS |
+| 제출용 화면 이미지 | TEAM INPUT |
+
+## 11. 남은 MVP 한계
+
+- 현재는 한 학교 안의 멀티그룹이며 여러 학교의 데이터 격리는 없다.
+- 날짜가 겹치는 미래 예약의 수량을 캘린더 단위로 계산하지 않는다.
+- 도입은 실제 발주·배송·회계 시스템과 연결되지 않는다.
+- 자산 개별 시리얼, 손상·수리·분실 처리가 없다.
+- 원격 서비스 호출과 로컬 DB 작업 사이의 Saga·보상 트랜잭션이 없다.
+- 내부 API의 서비스 인증과 완전한 감사로그가 필요하다.
+- 브라우저 OAuth는 제공 Auth Server 호환을 우선했으며 운영에서는 PKCE 또는 BFF가 필요하다.
+- AI 평가는 합성 이력 기반이다. 실제 운영 판단 전 LIVE 데이터로 재학습·재검증해야 한다.

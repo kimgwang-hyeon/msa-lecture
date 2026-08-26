@@ -68,7 +68,7 @@ export const useCourseStore = defineStore('course', () => {
         : Array.isArray(res.data) ? res.data : []
       courses.value = raw.map(normalizeCourse)
     } catch (e) {
-      error.value = e.response?.data?.message || '교보재 목록을 불러오지 못했습니다.'
+      error.value = e.response?.data?.message || '자산 목록을 불러오지 못했습니다.'
       courses.value = []
     } finally {
       loading.value = false
@@ -82,7 +82,7 @@ export const useCourseStore = defineStore('course', () => {
       const res = await courseApi.getById(id)
       selectedCourse.value = normalizeCourse(res.data?.data ?? res.data)
     } catch (e) {
-      error.value = e.response?.data?.message || '교보재 정보를 불러오지 못했습니다.'
+      error.value = e.response?.data?.message || '자산 정보를 불러오지 못했습니다.'
       selectedCourse.value = null
     } finally {
       loading.value = false

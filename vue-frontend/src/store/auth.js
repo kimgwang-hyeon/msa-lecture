@@ -3,10 +3,46 @@ import { ref, computed } from 'vue'
 import { authApi } from '@/api/auth.js'
 
 const AUTH_SERVER_URL = import.meta.env.VITE_AUTH_SERVER_URL || 'http://localhost:8080'
+const POST_LOGIN_REDIRECT_KEY = 'post_login_redirect'
+
+function readStoredUser() {
+  try {
+    return JSON.parse(sessionStorage.getItem('user') || 'null')
+  } catch {
+    sessionStorage.removeItem('user')
+    return null
+  }
+}
+
+function decodeTokenPayload(token) {
+  try {
+    const encoded = token.split('.')[1]
+    if (!encoded) return null
+    const normalized = encoded.replace(/-/g, '+').replace(/_/g, '/')
+    const padded = normalized.padEnd(Math.ceil(normalized.length / 4) * 4, '=')
+    return JSON.parse(decodeURIComponent(escape(atob(padded))))
+  } catch {
+    return null
+  }
+}
+
+function readStoredToken() {
+  const token = sessionStorage.getItem('access_token')
+  if (!token) return null
+
+  const payload = decodeTokenPayload(token)
+  if (payload?.exp && payload.exp * 1000 <= Date.now()) {
+    sessionStorage.removeItem('access_token')
+    sessionStorage.removeItem('user')
+    return null
+  }
+  return token
+}
 
 export const useAuthStore = defineStore('auth', () => {
-  const accessToken = ref(sessionStorage.getItem('access_token') || null)
-  const user = ref(JSON.parse(sessionStorage.getItem('user') || 'null'))
+  const initialToken = readStoredToken()
+  const accessToken = ref(initialToken)
+  const user = ref(initialToken ? readStoredUser() : null)
 
   const isAuthenticated = computed(() => !!accessToken.value)
   const isInstructor = computed(() => user.value?.role === 'INSTRUCTOR')
@@ -39,19 +75,43 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  function logout(redirect = true) {
+  function clearSession() {
     accessToken.value = null
     user.value = null
     sessionStorage.removeItem('access_token')
     sessionStorage.removeItem('user')
+    sessionStorage.removeItem('current_group_id')
+  }
+
+  async function logout(redirect = true, revokeSso = false) {
+    clearSession()
+
+    if (revokeSso) {
+      try {
+        await fetch(`${AUTH_SERVER_URL}/logout`, {
+          method: 'GET',
+          credentials: 'include',
+          mode: 'no-cors',
+          cache: 'no-store',
+          keepalive: true
+        })
+      } catch {
+        // 로컬 세션은 이미 제거했으므로 인증 서버 로그아웃 실패가 화면을 막지 않게 한다.
+      }
+    }
 
     if (redirect) {
-      window.location.href = '/login'
+      window.location.assign('/login')
     }
   }
 
   // OAuth2 Authorization Code Flow
-  function redirectToLogin() {
+  function redirectToLogin(redirectPath = '/groups') {
+    const safeRedirect = typeof redirectPath === 'string' && redirectPath.startsWith('/')
+      ? redirectPath
+      : '/groups'
+    sessionStorage.setItem(POST_LOGIN_REDIRECT_KEY, safeRedirect)
+
     const params = new URLSearchParams({
       response_type: 'code',
       client_id: import.meta.env.VITE_CLIENT_ID,
@@ -60,6 +120,12 @@ export const useAuthStore = defineStore('auth', () => {
     })
 
     window.location.href = `${AUTH_SERVER_URL}/oauth2/authorize?${params.toString()}`
+  }
+
+  function consumePostLoginRedirect() {
+    const redirectPath = sessionStorage.getItem(POST_LOGIN_REDIRECT_KEY) || '/groups'
+    sessionStorage.removeItem(POST_LOGIN_REDIRECT_KEY)
+    return redirectPath.startsWith('/') ? redirectPath : '/groups'
   }
 
   async function handleCallback(code) {
@@ -84,8 +150,10 @@ export const useAuthStore = defineStore('auth', () => {
     setToken,
     setUser,
     fetchUser,
+    clearSession,
     logout,
     redirectToLogin,
+    consumePostLoginRedirect,
     handleCallback
   }
 })

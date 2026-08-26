@@ -1,16 +1,39 @@
 <template>
-  <router-link :to="`/groups/${groupId}/assets/${course.id}`" class="gear-card surface">
-    <div class="card-top" :class="toneClass">
-      <span class="category-icon">{{ icon }}</span>
-      <span :class="['stock-pill', { empty: available === 0 }]">{{ available > 0 ? `${available}개 가능` : '대여 불가' }}</span>
+  <router-link
+    :to="`/groups/${groupId}/assets/${course.id}`"
+    class="gear-card surface"
+    :aria-label="`${course.title}, ${availabilityLabel}, 최대 ${course.maxLoanDays || 7}일 대여`"
+  >
+    <div class="card-visual" :class="toneClass">
+      <div class="category-mark" aria-hidden="true">
+        <span>{{ icon }}</span>
+        <small>{{ shortCategory }}</small>
+      </div>
+      <span :class="['stock-pill', { empty: available === 0 }]">{{ availabilityLabel }}</span>
     </div>
+
     <div class="card-body">
-      <div class="scope-line"><span class="badge">{{ course.category }}</span><small>{{ course.visibility === 'ORGANIZATION' ? '학교 공용' : '그룹 전용' }}</small></div>
+      <div class="scope-line">
+        <span class="badge">{{ course.category }}</span>
+        <span :class="['scope-badge', course.visibility === 'ORGANIZATION' ? 'organization' : 'group']">
+          {{ course.visibility === 'ORGANIZATION' ? '학교 공용' : '그룹 전용' }}
+        </span>
+      </div>
       <h3>{{ course.title }}</h3>
       <p>{{ course.description || '수업, 연구와 그룹 활동에 사용할 수 있는 자산입니다.' }}</p>
-      <div class="card-meta">
-        <div><small>대여 장소</small><strong>{{ course.pickupLocation || '그룹 운영실' }}</strong></div>
-        <div class="usage"><small>최대 기간</small><strong>{{ course.maxLoanDays || 7 }}일</strong></div>
+      <dl class="card-meta">
+        <div>
+          <dt>수령·반납</dt>
+          <dd>{{ course.pickupLocation || '그룹 운영실' }}</dd>
+        </div>
+        <div>
+          <dt>최대 기간</dt>
+          <dd>{{ course.maxLoanDays || 7 }}일</dd>
+        </div>
+      </dl>
+      <div class="card-action">
+        <span>{{ available > 0 ? '상세 확인 후 신청' : '반납 후 신청 가능' }}</span>
+        <b aria-hidden="true">→</b>
       </div>
     </div>
   </router-link>
@@ -19,20 +42,130 @@
 <script setup>
 import { computed } from 'vue'
 import { categoryIcon } from '@/store/course.js'
-const props = defineProps({ course: { type: Object, required: true }, groupId: { type: [String, Number], required: true } })
+
+const props = defineProps({
+  course: { type: Object, required: true },
+  groupId: { type: [String, Number], required: true }
+})
+
 const available = computed(() => Number(props.course.availableQuantity ?? 0))
 const icon = computed(() => categoryIcon(props.course.categoryCode || props.course.category))
+const shortCategory = computed(() => String(props.course.category || '기타').slice(0, 6))
 const toneClass = computed(() => `tone-${(props.course.categoryCode || 'ETC').toLowerCase().replaceAll('_', '-')}`)
+const availabilityLabel = computed(() => available.value > 0 ? `${available.value}개 가능` : '현재 대여 불가')
 </script>
 
 <style scoped>
-.gear-card { overflow: hidden; transition: var(--transition); }
-.gear-card:hover { transform: translateY(-4px); border-color: var(--color-border-hover); box-shadow: var(--shadow-md); }
-.card-top { height: 112px; padding: 15px; display: flex; align-items: flex-start; justify-content: space-between; background: #eaf4f0; }
-.tone-computer { background: #edf2fb; }.tone-camera-audio { background: #f1eef8; }.tone-presentation { background: #fff3df; }.tone-maker { background: #f7ecf2; }.tone-electronics-iot { background: #e9f4f2; }.tone-device { background: #eef3fb; }.tone-accessory { background: #f1f3ef; }
-.category-icon { align-self: center; margin-left: 9px; color: rgba(16,42,67,.7); font-size: 42px; }
-.stock-pill { padding: 5px 8px; color: var(--color-success); background: rgba(255,255,255,.84); border-radius: 999px; font-size: 9px; font-weight: 800; }.stock-pill.empty { color: var(--color-danger); }
-.card-body { padding: 17px; }.scope-line { display: flex; align-items: center; justify-content: space-between; gap: 8px; }.scope-line small { color: var(--color-text-muted); font-size: 9px; }
-h3 { margin-top: 9px; color: var(--color-navy); font-size: 16px; line-height: 1.35; }p { height: 42px; margin-top: 7px; overflow: hidden; color: var(--color-text-secondary); font-size: 11px; line-height: 1.8; }
-.card-meta { margin-top: 15px; padding-top: 12px; border-top: 1px solid var(--color-border); display: flex; justify-content: space-between; gap: 12px; }.card-meta div { display: flex; flex-direction: column; }.card-meta small { color: var(--color-text-muted); font-size: 9px; }.card-meta strong { margin-top: 2px; font-size: 11px; }.usage { text-align: right; }
+.gear-card {
+  overflow: hidden;
+  transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease;
+}
+.gear-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--color-border-hover);
+  box-shadow: var(--shadow-md);
+}
+.card-visual {
+  min-height: 104px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 15px;
+  background: #eaf4f0;
+}
+.tone-computer { background: linear-gradient(145deg, #edf2fb, #e4ebf8); }
+.tone-camera-audio { background: linear-gradient(145deg, #f1eef8, #e9e2f4); }
+.tone-presentation { background: linear-gradient(145deg, #fff3df, #f8e8ca); }
+.tone-maker { background: linear-gradient(145deg, #f7ecf2, #f0dfe8); }
+.tone-electronics-iot { background: linear-gradient(145deg, #e9f4f2, #d9ece7); }
+.tone-device { background: linear-gradient(145deg, #eef3fb, #dfe8f7); }
+.tone-accessory { background: linear-gradient(145deg, #f1f3ef, #e4e8e0); }
+.category-mark {
+  align-self: center;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: rgba(16, 42, 67, .76);
+}
+.category-mark span {
+  font-size: 38px;
+  line-height: 1;
+}
+.category-mark small {
+  max-width: 74px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .08em;
+}
+.stock-pill {
+  padding: 5px 8px;
+  color: var(--color-success);
+  background: rgba(255, 255, 255, .9);
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 800;
+}
+.stock-pill.empty { color: var(--color-danger); }
+.card-body { padding: 18px; }
+.scope-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.scope-badge {
+  font-size: 10px;
+  font-weight: 700;
+}
+.scope-badge.organization { color: var(--color-info); }
+.scope-badge.group { color: var(--color-ai); }
+h3 {
+  margin-top: 10px;
+  color: var(--color-navy);
+  font-size: 17px;
+  line-height: 1.35;
+}
+p {
+  min-height: 43px;
+  margin-top: 7px;
+  display: -webkit-box;
+  overflow: hidden;
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  line-height: 1.7;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+.card-meta {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 12px;
+  margin-top: 15px;
+  padding-top: 13px;
+  border-top: 1px solid var(--color-border);
+}
+.card-meta div { min-width: 0; }
+.card-meta dt {
+  color: var(--color-text-muted);
+  font-size: 10px;
+}
+.card-meta dd {
+  margin: 2px 0 0;
+  overflow: hidden;
+  font-size: 11px;
+  font-weight: 750;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.card-meta div:last-child { text-align: right; }
+.card-action {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 13px;
+  color: var(--color-primary);
+  font-size: 11px;
+  font-weight: 700;
+}
+.card-action b { font-size: 15px; }
 </style>

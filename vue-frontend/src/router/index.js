@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/store/auth.js'
+import { useGroupStore } from '@/store/group.js'
 
 function legacyGroupPath(suffix = '') {
   const groupId = sessionStorage.getItem('current_group_id')
@@ -37,13 +38,25 @@ const router = createRouter({
   scrollBehavior: () => ({ top: 0 })
 })
 
-router.beforeEach((to) => {
+router.beforeEach(async (to) => {
   const auth = useAuthStore()
   if (to.meta.requiresAuth && !auth.isAuthenticated) return { name: 'Login', query: { redirect: to.fullPath } }
   if (to.meta.guestOnly && auth.isAuthenticated) return { name: 'GroupList' }
   if (to.meta.managerOnly && auth.user?.role !== 'INSTRUCTOR') {
-    // 세부 그룹 관리자 여부는 그룹 API를 읽은 화면에서 다시 확인한다.
-    return true
+    const groupId = Number(to.params.groupId)
+    const groupStore = useGroupStore()
+    try {
+      const group = await groupStore.loadGroup(groupId)
+      if (group?.currentRole !== 'MANAGER') {
+        return {
+          name: 'GroupDashboard',
+          params: { groupId },
+          query: { notice: 'manager-required' }
+        }
+      }
+    } catch {
+      return { name: 'GroupList' }
+    }
   }
 })
 

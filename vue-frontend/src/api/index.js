@@ -7,6 +7,8 @@ const api = axios.create({
   headers: { 'Content-Type': 'application/json' }
 })
 
+let handlingUnauthorized = false
+
 api.interceptors.request.use((config) => {
   const auth = useAuthStore()
   if (auth.accessToken) {
@@ -19,13 +21,14 @@ api.interceptors.response.use(
   (res) => res,
   (err) => {
     if (err.response?.status === 401) {
-      console.error('[API] 401 Unauthorized')
-      console.error('[API] response data =', err.response?.data)
-      console.error('[API] request url =', err.config?.url)
-      // 디버깅 중에는 자동 로그아웃/리다이렉트 잠시 비활성화
-      // const auth = useAuthStore()
-      // auth.logout()
-      // window.location.href = '/login'
+      const auth = useAuthStore()
+      auth.clearSession()
+
+      if (!handlingUnauthorized && !window.location.pathname.startsWith('/login')) {
+        handlingUnauthorized = true
+        const redirect = `${window.location.pathname}${window.location.search}`
+        window.location.replace(`/login?expired=1&redirect=${encodeURIComponent(redirect)}`)
+      }
     }
     return Promise.reject(err)
   }

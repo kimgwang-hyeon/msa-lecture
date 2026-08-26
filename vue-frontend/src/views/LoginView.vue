@@ -27,6 +27,9 @@
           <div v-if="!showRegister" class="section">
             <h3 class="section-title">로그인</h3>
             <p class="section-desc">학교 계정으로 로그인해 소속 그룹을 선택합니다.</p>
+            <div v-if="expired" class="session-notice" role="status">
+              안전을 위해 로그인 시간이 만료되었습니다. 다시 로그인해 주세요.
+            </div>
             <button class="btn btn-primary btn-full" @click="handleOAuth">로그인</button>
             <div class="switch-link">
               계정이 없으신가요?
@@ -77,23 +80,26 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
+import { useRoute } from 'vue-router'
 import { useAuthStore } from '@/store/auth.js'
 import { authApi } from '@/api/auth.js'
 
 const auth = useAuthStore()
+const route = useRoute()
 
 const showRegister = ref(false)
 const loading = ref(false)
 const error = ref('')
 const success = ref('')
+const expired = computed(() => route.query.expired === '1')
 
 const registerForm = ref({ name: '', email: '', password: '', role: 'STUDENT' })
 
 const features = ['학교 공용·그룹 전용 자산 조회', '대여 승인과 반납 확인', '관리자용 AI 수요예측']
 
 function handleOAuth() {
-  auth.redirectToLogin()
+  auth.redirectToLogin(route.query.redirect || '/groups')
 }
 
 async function handleRegister() {
@@ -121,6 +127,16 @@ async function handleRegister() {
   min-height: 100vh;
   display: flex;
   align-items: stretch;
+}
+.session-notice {
+  margin-bottom: 16px;
+  padding: 12px 14px;
+  color: var(--color-warning);
+  background: var(--color-warning-light);
+  border: 1px solid #efd5a3;
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  line-height: 1.55;
 }
 .login-layout {
   display: grid;

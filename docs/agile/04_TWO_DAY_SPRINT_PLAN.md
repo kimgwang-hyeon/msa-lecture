@@ -1,233 +1,188 @@
-# 2일·2스프린트 운영 계획
+# GearHub Campus 2일·2 Sprint 계획
 
-## 1. 운영 원칙
+## 1. Sprint 구성
 
-- Day 1을 Sprint 1, Day 2를 Sprint 2로 운영한다.
-- 각 Sprint는 `Planning → 실행 → 중간 Stand-up → 통합 → Review → Retro`로 닫는다.
-- 문서보다 동작하는 흐름을 먼저 만들고, 문서는 결정과 검증 근거만 남긴다.
-- 이 문서의 Review·Retro 내용은 현재 코드에서 확인된 관찰을 정리한 초안이다. 실제 팀 회의 후 `TEAM INPUT` 부분을 팀 의견으로 교체한다.
+두 Sprint는 기능 개수를 나누는 대신 사용자가 끝까지 실행할 수 있는 수직 흐름으로 구성한다.
 
-## 2. 팀 역할 배분안
+| 구분 | Sprint Goal | 완료 시 보여줄 결과 |
+|---|---|---|
+| Sprint 1 / Day 1 | 그룹에서 자산을 대여하고 반납해 재고가 정확히 원복된다 | 로그인, 그룹, 자산, 신청, 승인, 반납 |
+| Sprint 2 / Day 2 | 장비 도입과 다음 4주 수요예측이 관리자 행동으로 연결된다 | 그룹 검토, 예산, 입고, 모델 비교, 부족·이동 제안 |
 
-이름을 알 수 없으므로 전공을 활용한 역할 후보만 제시한다. 한 사람이 한 역할에 고정될 필요는 없다.
+## 2. 운영 원칙
 
-| 배경 | 1차 역할 | Sprint 1 | Sprint 2 |
-|---|---|---|---|
-| 컴퓨터공학 A | Asset Backend | 교보재·재고 모델/API | 구매요청 상품 타입과 내부 API |
-| 컴퓨터공학 B | Request Backend | 대여 신청·승인 상태 | 구매 신청과 Budget 연동 |
-| 컴퓨터공학 C | Integration/Frontend | Gateway 연동·대여 UI | Kafka·승인 UI·통합 버그 수정 |
-| 통계학 | Recommendation/QA | 테스트 데이터와 성공 지표 | 대체재 규칙·추천 평가 기준 |
-| 전기전자공학 | Domain/QA | IoT·전자 교보재 시나리오, 재고 경계값 | 구매요청 입력값·장비 대체 가능성 검토 |
-| 건축학 | UX/Domain | 공간·메이커 장비 사용자 여정 | 신청 폼·운영진 검토 정보 구조, 데모 스토리 |
-| 기타 팀원 | PO·Scrum Master·문서·테스트 중 분담 | 백로그와 Review 진행 | 통합 검증·회고·발표 자료 준비 |
+- Sprint마다 동작하는 종단 간 결과를 만든다.
+- 상태 전이와 재고 정합성을 화면 꾸미기보다 먼저 검증한다.
+- AI는 학습 성공이 아니라 기준선 비교와 관리자 행동까지 완료해야 한다.
+- 새 요구는 Sprint Goal을 깨지 않는 범위에서만 현재 Sprint에 넣는다.
+- Review에서는 실행 화면과 API 결과를 보여주고, 회고에서는 다음 Sprint의 한 가지 행동 변화를 정한다.
 
-Scrum 역할은 `Product Owner 1명`, `Scrum Master 1명`, `Development Team 나머지 인원`으로 둔다. 전공은 역할 배분의 참고일 뿐이며, Day 2에는 PO·SM과 통합 담당을 순환해 모든 팀원이 제품·프로세스 관점을 경험하도록 한다.
+## 3. 역할 배분
 
-### 팀 공통 약속
+인원이 정해지지 않은 경우 아래 책임을 한 사람이 겸임할 수 있다.
 
-- API 요청·응답 변경은 [06_API_CONTRACT.md](./06_API_CONTRACT.md)에 먼저 반영한다.
-- 담당 서비스 밖의 파일을 수정할 때 담당자에게 알린다.
-- `main` 또는 공유 브랜치에 합치기 전 빌드와 핵심 테스트를 실행한다.
-- 막힘은 기술 전체가 아니라 실패한 URL·요청·응답 단위로 공유한다.
+| 책임 | 주요 작업 |
+|---|---|
+| Product Owner | 문제, 우선순위, 인수 조건, Review 승인 |
+| Flow Owner | Request 상태 전이, 서비스 연결, Kafka |
+| Data Owner | 그룹·자산·예산 스키마와 재고 정합성 |
+| AI Owner | 시뮬레이션, 특징, 모델 평가, 예측 API |
+| Experience Owner | Vue 그룹 워크스페이스, 오류·상태 표현 |
+| Quality Owner | Compose, 테스트, 시드, 데모 증거 |
 
-## 3. Sprint 0 / 착수 전 60분
+실제 팀 이름과 담당은 TEAM INPUT으로 별도 기록한다.
 
-추가 Agile·MSA PDF의 Sprint 0 체크리스트를 이틀 실습 규모로 압축한다. 코딩을 시작하기 전에 아래 항목만 합의하고, 상세 문서는 실행 중 갱신한다.
+## 4. Sprint 0 / 착수 전 60분
 
-| 시간 | 합의 내용 | 결과물 |
+| 시간 | 활동 | 산출물 |
 |---:|---|---|
-| 10분 | B2B 고객과 문제 정의 | “교육기관·기업의 내부 장비 운영 SaaS” 한 문장, 첫 고객 SKALA |
-| 10분 | PO·SM·개발팀과 Day 2 순환 역할 지정 | 팀원 이름이 들어간 역할표 (`TEAM INPUT`) |
-| 15분 | Product Backlog 상위 항목 정제·MoSCoW | 상위 10개 Story와 인수 조건 |
-| 10분 | 공통 DoD·API 우선 규칙 합의 | [03_PRODUCT_BACKLOG.md](./03_PRODUCT_BACKLOG.md)의 DoD·DoR |
-| 10분 | Release·Sprint Goal과 용량 확정 | Day 1 대여, Day 2 구매·예산 Increment |
-| 5분 | Sprint Board 열과 Daily 시각 결정 | `To Do / In Progress / Done`, 중간 15분 Stand-up |
+| 0~15분 | 사용자와 문제 합의 | 한 문장 제품 정의 |
+| 15~30분 | 템플릿과 업무 도메인 매핑 | 서비스 책임표 |
+| 30~45분 | 상태·권한·재고 규칙 합의 | 핵심 인수 조건 |
+| 45~60분 | 환경과 역할 확인 | Compose 기동, 작업 분배 |
 
-Sprint 0는 별도 개발 스프린트가 아니다. 필요한 합의가 이미 문서에 있으면 확인만 하고 바로 Sprint 1로 들어간다.
+착수 조건:
 
-## 4. 공통 하루 일정
+- 한 학교·멀티그룹 범위가 합의됐다.
+- 학교 공용 자산과 그룹 전용 자산의 차이가 정의됐다.
+- 대여 승인 시 차감, 반납 확인 시 복구 규칙이 정해졌다.
+- 개인 추천이 아니라 관리자 수요예측을 AI 목표로 정했다.
 
-| 시간대 | 이벤트 | 결과물 |
+## 5. 공통 하루 일정
+
+| 시각 | 활동 | 확인점 |
 |---|---|---|
-| 09:00~09:25 | Sprint Planning | Sprint Goal, 선택 백로그, 담당 |
-| 09:25~12:00 | 병렬 구현 1 | 서비스별 첫 동작 |
-| 12:00~13:20 | 점심 | - |
-| 13:20~13:35 | Stand-up | 완료·다음 작업·막힘 공유 |
-| 13:35~16:20 | 병렬 구현 2 | 프론트 연동과 오류 처리 |
-| 16:20~17:10 | 통합 테스트·버그픽스 | 인수 조건 결과 |
-| 17:10~17:35 | Sprint Review | 처음부터 끝까지 데모, 피드백 |
-| 17:35~18:00 | Retrospective | Keep·Problem·Try와 다음 결정 |
+| 09:00 | Sprint Planning | Goal과 선택 Story |
+| 09:30 | 계약·작업 분해 | API, 상태, 담당 |
+| 10:00 | 구현 1 | 수직 흐름의 앞부분 |
+| 12:00 | 통합 확인 | 서비스 간 첫 연결 |
+| 13:00 | Daily Scrum | 막힘과 범위 조정 |
+| 13:15 | 구현 2 | 오류 조건과 UI |
+| 16:00 | 안정화 | 테스트, 시드, 문서 |
+| 17:00 | Sprint Review | 실제 동작 시연 |
+| 17:30 | Retrospective | 다음 행동 1개 결정 |
 
-## 5. Sprint 1 / Day 1
+## 6. Sprint 1 / 그룹 대여·반납
 
 ### Sprint Goal
 
-교육생이 로그인 후 보유 교보재와 재고를 확인하고 대여를 신청하면, 운영진이 승인하여 신청 활성화와 재고 차감까지 완료되는 워킹 스켈레톤을 만든다.
+> 구성원이 자신의 그룹에서 사용할 수 있는 장비를 신청하고, 관리자가 승인·반납 확인했을 때 재고가 정확히 감소·복구된다.
 
-### 선택한 범위
+### 선택 Story
 
-- 활용 서비스: Member, Asset, Request
-- 인프라: Auth, Gateway, Eureka는 그대로 사용
-- 제외: Budget 자동화, Kafka 상태 연동, Alternative 추천
-- 프론트: 목록, 상세, 대여 신청, 운영진 대여 승인
-
-### 워킹 스켈레톤
-
-```text
-로그인
- → GET /api/courses
- → GET /api/courses/{id}
- → POST /api/enrollments
- → GET /api/enrollments/pending?requestType=LOAN
- → POST /api/enrollments/{id}/approve
- → Asset 가용 재고 감소 + Request ACTIVE
-```
-
-### Sprint Backlog
-
-`G-01`, `M-01`, `M-02`, `A-01`, `A-02`, `A-03`, `R-01`, `R-02`, `R-03`, `R-04`
+F-01, G-01, G-02, A-01, A-02, L-01, L-02, L-03, L-04
 
 ### 작업 분해
 
-| 트랙 | 작업 | 완료 증거 |
-|---|---|---|
-| Domain | Course에 자산 타입·수량을 최소 컬럼으로 추가 | Asset 응답에 `itemType`, `totalQuantity`, `availableQuantity` |
-| Request | 대여 사유, PENDING, 승인·반려 전이 추가 | Request 응답의 `requestType=LOAN` |
-| Integration | 승인 시 Asset 내부 API로 재고 차감 | 가용 수량 2 → 1 |
-| Frontend | 교보재 목록·상세·대여 신청·승인 화면 | 요청 전·후 화면 |
-| QA | 재고 0, 중복 신청, 중복 승인 확인 | 409 또는 검증 오류와 재고 비음수 |
-| Documentation | 도메인 매핑·API 계약·Review 기록 | 본 문서 세트 |
+| 순서 | 작업 | 완료 기준 |
+|---:|---|---|
+| 1 | 사용자와 그룹·멤버십 스키마 | 초대 가입, MEMBER·MANAGER 조회 |
+| 2 | 동적 그룹 URL과 접근 범위 | /groups/{groupId} 기준 화면 이동 |
+| 3 | 자산 공개 범위와 수량 | 공용 + 현재 그룹 자산만 조회 |
+| 4 | 대여 요청 계약 | 기간, 목적, maxLoanDays 검증 |
+| 5 | 승인·반려 | 관리자 권한과 재고 부족 거부 |
+| 6 | 반납 요청·확인 | 요청 시 재고 유지, 확인 시 1 복구 |
+| 7 | 내 요청·연체 | ACTIVE와 RETURN_REQUESTED 연체 표시 |
+| 8 | 통합·UI 검증 | 브라우저에서 전체 흐름 재현 |
 
-### Review 시나리오
+### 먼저 통합할 워킹 스켈레톤
 
-1. 교육생으로 로그인한다.
-2. “조직이 보유 장비를 구성원에게 제공하는 B2B SaaS”라는 고객 가치를 한 문장으로 설명한다.
-3. `iPhone 15 Pro`의 가용 수량이 2개인지 확인한다.
-4. iOS 실기기 테스트 목적을 입력해 대여를 신청한다.
-5. 운영진 화면에서 `PENDING` 요청을 확인한다.
-6. 승인 후 신청이 `ACTIVE`, 가용 수량이 1개인지 확인한다.
+1. Web에서 로그인한다.
+2. Gateway를 통해 Member의 내 그룹을 조회한다.
+3. 그룹 자산 목록을 Asset에서 읽는다.
+4. Request에 PENDING 요청을 한 건 생성한다.
+5. 관리자 승인으로 Asset 수량이 감소하는지 확인한다.
 
-### 현재 코드 기준 Review 결과
+이 골격이 작동한 뒤 반납, 상세 UI, 오류 메시지를 붙인다.
 
-- 대여 신청 생성: 통과
-- 운영진 대기 목록 조회: 통과
-- 승인 후 Request `ACTIVE`: 통과
-- Asset 가용 수량 `2 → 1`: 통과
-- Kafka 없이도 핵심 대여 가치 제공: 통과
+### Review 인수 시나리오
 
-### Sprint 1 Retro 초안
+1. 관리자와 구성원이 같은 그룹에 속해 있음을 보여준다.
+2. 공용 자산과 그룹 전용 자산이 함께 보이는지 확인한다.
+3. 구성원이 대여기간과 사유를 입력한다.
+4. 관리자가 승인하고 가용 수량이 1 감소하는지 확인한다.
+5. 구성원이 반납 요청을 해도 수량이 그대로인지 확인한다.
+6. 관리자가 반납 확인한 뒤 수량이 1 복구되는지 확인한다.
+7. 다른 그룹 전용 자산과 잘못된 상태 전이가 거부되는지 설명한다.
 
-| 구분 | 관찰 |
-|---|---|
-| Keep | 기존 Course·Enrollment API와 테이블을 재사용해 짧은 시간에 워킹 스켈레톤을 만들었다. |
-| Problem | 코드 용어가 강의·수강·결제로 남아 팀 도메인을 설명하기 어려웠다. |
-| Problem | 로컬 전체 Context Test는 Docker DB 주소 때문에 바로 실행되지 않았다. |
-| Try | Sprint 2에서 서비스 논리 이름을 바꾸고, 순수 단위 테스트와 Docker 통합 테스트를 분리한다. |
-| Try | 구매요청 전에 대체재를 확인하게 해 중복 구매 문제를 직접 다룬다. |
+### 완료 결과
 
-`TEAM INPUT`: 실제 Review에서 나온 사용자·교수 피드백과 팀원별 한 줄 회고를 추가한다.
+- 그룹 목록, 대시보드, 자산 카탈로그, 내 요청 화면이 연결됐다.
+- PENDING → ACTIVE → RETURN_REQUESTED → RETURNED 상태가 구현됐다.
+- 승인과 반납 확인 시점의 재고 변화가 통합 검증됐다.
+- 그룹 관리자와 학교 관리자 권한이 적용됐다.
 
-## 6. Sprint 2 / Day 2
+## 7. Sprint 2 / 도입·예산·AI
 
 ### Sprint Goal
 
-보유하지 않은 교보재를 구매 요청하면 대체재 확인과 예산 검토를 거치고, 운영진의 승인·반려 결과가 Kafka를 통해 신청 상태에 자동 반영되는 전체 흐름을 완성한다.
+> 그룹에 없는 장비를 도입 요청해 예산 승인과 입고까지 추적하고, 관리자가 다음 4주 부족 재고와 이동 대안을 확인한다.
 
-### Sprint 1 Review를 반영한 결정
+### 선택 Story
 
-- 실제 결제를 구현하지 않고 Budget Service로 의미를 바꾼다.
-- 구매 중복을 줄이는 핵심 가치에 맞춰 Alternative Service를 구매 폼 앞에 배치한다.
-- 기존 `payment.completed`, `enrollment.completed` 토픽 구조는 유지한다.
-- 업무 서비스명은 GearHub 이름으로 바꾸되 포트·API·테이블은 유지한다.
-
-### 선택한 범위
-
-- Alternative: 동일 카테고리·가용 재고 기반 최대 5개 추천
-- Request: 구매요청 입력·검증·상태
-- Asset: `PURCHASE_REQUEST` 상품과 링크
-- Budget: 총액·PENDING·승인·반려
-- Kafka: Budget 결과를 Request 상태에 반영
-- Frontend: 구매요청 단계, 내 신청, 운영진 예산 검토
-
-### 확장 흐름
-
-```text
-구매요청 폼
- → Alternative 대체재 조회
- → POST /api/enrollments/purchases
- → Asset에 비공개 PURCHASE_REQUEST 생성
- → Budget PENDING 생성
- → 운영진 Budget 승인/반려
- → payment.completed(status=COMPLETED|FAILED)
- → Request ACTIVE|REJECTED
- → enrollment.completed
-```
-
-### Sprint Backlog
-
-`X-01`, `X-02`, `X-03`, `B-01`, `B-02`, `E-01`, `F-01`, `N-01`, `N-02`, `D-01`
+Q-01~Q-04, D-01~D-05, O-01~O-03
 
 ### 작업 분해
 
-| 트랙 | 작업 | 완료 증거 |
+| 순서 | 작업 | 완료 기준 |
+|---:|---|---|
+| 1 | 도입 요청 | PURCHASE와 PURCHASE_REQUEST 생성 |
+| 2 | 그룹 1차 검토 | GROUP_APPROVED와 반려 사유 |
+| 3 | 학교 예산 검토 | Budget PENDING, COMPLETED·FAILED |
+| 4 | Kafka 연결 | payment.completed로 Request 상태 반영 |
+| 5 | 입고 | RECEIVED와 OWNED / ACTIVE 전환 |
+| 6 | 분석 이벤트 | rental.lifecycle를 LIVE로 멱등 저장 |
+| 7 | 분석 시드 | 78주 SIMULATION과 운영 데이터 분리 |
+| 8 | 모델 평가 | 시간순 분리, 기준선과 후보 모델 비교 |
+| 9 | 예측 행동화 | 필요·부족 수량과 그룹 간 이동 제안 |
+| 10 | 전달 품질 | Compose, 테스트, 빌드, 데모 계정 |
+
+### AI Spike 제한
+
+AI 구현 전에 최대 60분 Spike로 다음을 확정한다.
+
+- 예측 단위: 그룹 × 카테고리 × 주
+- 예측 구간: 다음 4주
+- 기준선: 최근 4주 이동평균
+- 분할: 과거 학습, 다음 검증, 마지막 테스트
+- 성공: 같은 테스트 구간에서 WAPE가 기준선보다 낮음
+- 출력 행동: 재고 이동 우선, 부족이 남으면 도입 검토
+
+Spike 결과가 나오면 모델 종류를 더 늘리지 않고 선택된 파이프라인을 제품에 연결한다.
+
+### Review 인수 시나리오
+
+1. 구성원이 미보유 장비 도입 요청을 만든다.
+2. 그룹 관리자가 승인해 예산 검토를 생성한다.
+3. 학교 관리자가 예산을 승인한다.
+4. Kafka 이후 요청이 BUDGET_APPROVED로 바뀌는지 확인한다.
+5. 입고 후 자산이 OWNED / ACTIVE가 되고 수량이 생기는지 확인한다.
+6. AI 화면에서 기준선·선택 모델·WAPE를 먼저 보여준다.
+7. 그룹의 7개 카테고리별 다음 4주 예측과 부족·이동 제안을 보여준다.
+
+### 완료 결과
+
+- PENDING → GROUP_APPROVED → BUDGET_APPROVED → RECEIVED 흐름이 연결됐다.
+- Budget 승인·반려가 payment.completed 이벤트로 Request에 반영됐다.
+- 10,814개 시뮬레이션 이벤트와 LIVE 이벤트가 분리됐다.
+- Histogram Gradient Boosting이 기준선 대비 WAPE를 20.79% 개선했다.
+- 프론트엔드를 포함한 11개 컨테이너와 데모 시드가 재현된다.
+
+## 8. 위험과 대응
+
+| 위험 | 영향 | 대응 |
 |---|---|---|
-| Recommendation | 동일 카테고리의 `OWNED && availableQuantity > 0` 조회 | `/api/recommend/alternatives` 응답 |
-| Request | URL·단가·수량·사유·대체재 확인 검증 | 잘못된 요청 400, 정상 요청 PENDING |
-| Budget | 서버 계산 총액과 승인·반려 API | `PENDING → COMPLETED/FAILED` |
-| Event | 결과 status를 Kafka payload에 포함 | Request `ACTIVE/REJECTED` 자동 전환 |
-| Frontend | 단계형 구매요청과 운영진 승인 화면 | 대체재 확인 후에만 제출 가능 |
-| Naming | Eureka·Compose·Gateway 목적지를 새 서비스명으로 정리 | Compose config 검증 |
-| QA | 승인·반려 E2E, 로그·빌드 검사 | [07_VALIDATION_AND_DEMO.md](./07_VALIDATION_AND_DEMO.md) |
+| 템플릿 용어 혼동 | 발표와 코드 책임 불일치 | 물리 이름과 업무 이름 매핑표 유지 |
+| 분산 트랜잭션 실패 | 요청과 재고 상태 불일치 | 현재 한계를 기록하고 재시도·보상은 후속 Backlog |
+| 재고 동시 승인 | 음수 재고 | Asset의 PESSIMISTIC_WRITE 잠금, 트랜잭션, JPA version 사용 |
+| Kafka 중복 | 분석 건수 왜곡 | eventId 기본키와 upsert |
+| 합성 데이터 과신 | AI 성능 과장 | SIMULATION 표시, 기준선·기간·오차 공개 |
+| UI에 대량 이력 노출 | 데모 사용성 저하 | 운영 200건과 분석 10,814건 분리 |
+| 범위 확대 | 두 Sprint Goal 미완료 | FUTURE Backlog로 이동 |
 
-### Review 시나리오
+## 9. Review·회고 기록 규칙
 
-1. 교육생이 `ELECTRONICS_IOT` 카테고리 구매요청을 시작한다.
-2. Raspberry Pi·Arduino 등 대여 가능한 보유 대체재를 확인한다.
-3. Jetson 키트의 링크, 단가, 수량과 사유를 제출한다.
-4. 운영진 화면에서 Budget `PENDING`과 총액을 확인한다.
-5. 예산 승인 후 Budget `COMPLETED`, Request `ACTIVE`를 확인한다.
-6. 별도 요청을 반려해 Budget `FAILED`, Request `REJECTED`도 확인한다.
-
-### 현재 코드 기준 Review 결과
-
-- 구매요청과 Budget PENDING 생성: 통과
-- 예산 승인 이벤트와 Request ACTIVE: 통과
-- 예산 반려 이벤트와 Request REJECTED: 통과
-- Alternative 내부 조회 규칙: 통과
-- 프론트 Production Build: 통과
-- 새 논리 서비스명 구성: 소스·Compose 검증 완료, 컨테이너 재기동 전(`READY`)
-- 인증 사용자의 전체 화면 캡처: `TEAM INPUT`
-
-### Sprint 2 Retro 초안
-
-| 구분 | 관찰 |
-|---|---|
-| Keep | Payment와 Kafka 구조를 버리지 않고 예산 승인이라는 도메인으로 치환했다. |
-| Keep | 승인·반려 두 경로를 모두 통합 테스트해 상태 이벤트를 검증했다. |
-| Problem | 서비스명을 바꾸면 제공 Gateway 이미지의 고정 라우팅과 충돌할 수 있었다. |
-| Problem | 현재 Alternative는 카테고리 규칙이라 의미가 비슷하지만 카테고리가 다른 장비는 찾지 못한다. |
-| Try | Gateway 이미지는 유지하고 Compose 환경변수로 새 Eureka 목적지를 연결한다. |
-| Try | 다음 스프린트 후보로 의미 기반 유사도 추천과 추천 품질 지표를 둔다. |
-
-`TEAM INPUT`: 실제 팀원별 `잘한 점 1개 / 아쉬운 점 1개 / 다음에 바꿀 점 1개`를 추가한다.
-
-## 7. 위험과 대응
-
-| 위험 | 영향 | 대응 | 담당 후보 |
-|---|---|---|---|
-| 외부 Docker Registry 지연 | 전체 재빌드 지연 | 사전 이미지 확인, 서비스별 빌드, 네트워크 정상 시 최종 클린 빌드 | Integration |
-| 기존 DB 볼륨의 컬럼 차이 | 실행 시 스키마 오류 | `ddl-auto:update` 확인, 초기 DDL과 실제 컬럼 비교 | Backend |
-| Kafka 이벤트 중복 | 재처리 시 잘못된 상태 전이 | 이미 종결된 상태는 멱등 처리 | Request/Budget |
-| 운영진 권한이 UI에만 의존 | 직접 API 호출 위험 | MVP 이후 서버 측 역할 검증 백로그 `S-01` | Security |
-| 팀원 병렬 수정 충돌 | 통합 지연 | 서비스·문서 담당 분리, API 계약 우선 | Scrum Master |
-| 화면 캡처 시 데이터 상태 불일치 | 데모 흐름 단절 | 데모 계정·교보재·요청 순서를 사전 고정 | QA |
-
-## 8. 실제 팀 회의 입력란
-
-- Product Owner: `TEAM INPUT`
-- Scrum Master: `TEAM INPUT`
-- Sprint 1 Review 참석자·피드백: `TEAM INPUT`
-- Sprint 2 Review 참석자·피드백: `TEAM INPUT`
-- 최종 회고 액션 아이템과 담당·기한: `TEAM INPUT`
-
-보드 이동, Daily Scrum, 속도와 계획 대비 실적은 [08_AGILE_EXECUTION_LOG.md](./08_AGILE_EXECUTION_LOG.md)에 이어서 기록한다.
+- Review에는 실제 실행한 URL, 요청 ID 또는 테스트 결과를 남긴다.
+- 이해관계자 피드백은 추정해 작성하지 않고 TEAM INPUT으로 남긴다.
+- 회고 액션은 담당자와 다음 확인 시점을 포함한다.
+- 최종 실행 증거는 [10_FINAL_VALIDATION.md](./10_FINAL_VALIDATION.md)에 모은다.
