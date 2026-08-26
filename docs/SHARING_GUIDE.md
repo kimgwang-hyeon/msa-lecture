@@ -34,8 +34,11 @@
    ```bash
    cd vue-frontend
    npm ci
+   cp .env.example .env
    npm run dev
    ```
+
+   `.env`의 `VITE_CLIENT_ID`와 `VITE_CLIENT_SECRET`은 제공된 auth-server 이미지에 등록된 값을 팀 내부의 안전한 방법으로 전달받아 입력한다. 실제 `.env`는 Git에 올리지 않는다.
 
 5. 프로젝트 루트에서 Docker 서비스를 실행한다.
 
