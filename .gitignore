@@ -1,0 +1,36 @@
+# Operating system files
+.DS_Store
+Thumbs.db
+
+# IDE and editor files
+.idea/
+.vscode/
+*.iml
+*.iws
+*.ipr
+
+# Java / Gradle generated files
+**/.gradle/
+**/build/
+**/out/
+**/bin/
+**/__pycache__/
+*.py[cod]
+
+# Frontend dependencies and build output
+**/node_modules/
+**/dist/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Local environment and secrets
+.env
+.env.*
+!.env.example
+
+# Large generated/share artifacts
+*.tar
+*.tar.gz
+*.zip
