@@ -10,6 +10,8 @@ public interface EnrollmentRepository extends JpaRepository<Enrollment, Long> {
 
     List<Enrollment> findByUserId(Long userId);
 
+    List<Enrollment> findByUserIdAndGroupId(Long userId, Long groupId);
+
     List<Enrollment> findByUserIdAndStatus(Long userId, Enrollment.Status status);
 
     List<Enrollment> findByStatusAndRequestType(
@@ -17,9 +19,29 @@ public interface EnrollmentRepository extends JpaRepository<Enrollment, Long> {
             Enrollment.RequestType requestType
     );
 
-    Optional<Enrollment> findByUserIdAndCourseId(Long userId, Long courseId);
+    List<Enrollment> findByStatusAndRequestTypeAndGroupId(
+            Enrollment.Status status,
+            Enrollment.RequestType requestType,
+            Long groupId
+    );
 
-    boolean existsByUserIdAndCourseId(Long userId, Long courseId);
+    Optional<Enrollment> findFirstByUserIdAndCourseIdAndRequestTypeOrderByCreatedAtDesc(
+            Long userId,
+            Long courseId,
+            Enrollment.RequestType requestType
+    );
+
+    List<Enrollment> findByGroupIdAndRequestTypeAndStatusOrderByCreatedAtDesc(
+            Long groupId,
+            Enrollment.RequestType requestType,
+            Enrollment.Status status
+    );
+
+    boolean existsByUserIdAndCourseIdAndStatusIn(
+            Long userId,
+            Long courseId,
+            List<Enrollment.Status> statuses
+    );
 
     // 수강 완료(ACTIVE)된 강의 ID 목록 - 추천 서비스용
     List<Enrollment> findByUserIdAndStatusIn(Long userId, List<Enrollment.Status> statuses);

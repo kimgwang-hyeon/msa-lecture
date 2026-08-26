@@ -15,6 +15,9 @@ public class KafkaConfig {
     @Value("${kafka.topic.enrollment-completed}")
     private String enrollmentCompletedTopic;
 
+    @Value("${kafka.topic.rental-lifecycle}")
+    private String rentalLifecycleTopic;
+
     @Bean
     public NewTopic paymentCompletedTopic() {
         return TopicBuilder.name(paymentCompletedTopic)
@@ -26,6 +29,14 @@ public class KafkaConfig {
     @Bean
     public NewTopic enrollmentCompletedTopic() {
         return TopicBuilder.name(enrollmentCompletedTopic)
+                .partitions(3)
+                .replicas(1)
+                .build();
+    }
+
+    @Bean
+    public NewTopic rentalLifecycleTopic() {
+        return TopicBuilder.name(rentalLifecycleTopic)
                 .partitions(3)
                 .replicas(1)
                 .build();

@@ -52,6 +52,21 @@ public class Course {
     @Column(name = "purchase_url", length = 1000)
     private String purchaseUrl;
 
+    @Column(name = "owner_group_id")
+    private Long ownerGroupId;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    @Builder.Default
+    private Visibility visibility = Visibility.ORGANIZATION;
+
+    @Column(name = "pickup_location", length = 200)
+    private String pickupLocation;
+
+    @Column(name = "max_loan_days", nullable = false)
+    @Builder.Default
+    private Integer maxLoanDays = 7;
+
     // 강사 ID (users 테이블 참조 - 직접 JOIN 없이 ID만 보관)
     @Column(nullable = false)
     private Long instructorId;
@@ -73,9 +88,13 @@ public class Course {
     @LastModifiedDate
     private LocalDateTime updatedAt;
 
+    @Version
+    private Long version;
+
     public enum Category {
         BACKEND, FRONTEND, DEVOPS, DATA_SCIENCE, MOBILE, SECURITY, DATABASE, OTHER,
-        DEVICE, COMPUTER, SERVER_CLOUD, ELECTRONICS_IOT, MAKER, CAMERA_AUDIO, ETC
+        DEVICE, COMPUTER, SERVER_CLOUD, ELECTRONICS_IOT, MAKER, CAMERA_AUDIO,
+        PRESENTATION, ACCESSORY, ETC
     }
 
     public enum ItemType {
@@ -85,6 +104,11 @@ public class Course {
 
     public enum Status {
         ACTIVE, INACTIVE
+    }
+
+    public enum Visibility {
+        ORGANIZATION,
+        GROUP
     }
 
     public void increaseEnrollmentCount() {
@@ -103,11 +127,47 @@ public class Course {
         this.enrollmentCount++;
     }
 
+    public void returnOne() {
+        applyGearHubDefaults();
+        if (itemType != ItemType.OWNED || status != Status.ACTIVE) {
+            throw new IllegalStateException("반납할 수 있는 자산이 아닙니다");
+        }
+        if (availableQuantity >= totalQuantity) {
+            throw new IllegalStateException("이미 모든 수량이 반납된 자산입니다");
+        }
+        this.availableQuantity++;
+    }
+
+    public void receiveAsOwned(
+            Integer receivedQuantity,
+            String pickupLocation,
+            Visibility visibility) {
+        if (itemType != ItemType.PURCHASE_REQUEST || status != Status.INACTIVE) {
+            throw new IllegalStateException("입고 대기 중인 장비만 자산으로 전환할 수 있습니다");
+        }
+        int quantity = receivedQuantity == null ? totalQuantity : receivedQuantity;
+        if (quantity <= 0) {
+            throw new IllegalArgumentException("입고 수량은 1 이상이어야 합니다");
+        }
+        this.totalQuantity = quantity;
+        this.availableQuantity = quantity;
+        this.itemType = ItemType.OWNED;
+        this.status = Status.ACTIVE;
+        this.visibility = visibility == null ? Visibility.GROUP : visibility;
+        if (pickupLocation != null && !pickupLocation.isBlank()) {
+            this.pickupLocation = pickupLocation.trim();
+        }
+    }
+
     @PrePersist
     @PostLoad
     private void applyGearHubDefaults() {
         if (itemType == null) itemType = ItemType.OWNED;
         if (totalQuantity == null) totalQuantity = 1;
         if (availableQuantity == null) availableQuantity = totalQuantity;
+        if (visibility == null) visibility = ownerGroupId == null
+                ? Visibility.ORGANIZATION
+                : Visibility.GROUP;
+        if (maxLoanDays == null || maxLoanDays <= 0) maxLoanDays = 7;
     }
 }

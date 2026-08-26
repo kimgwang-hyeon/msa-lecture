@@ -1,4 +1,4 @@
-# SKALA GearHub 실습 문서 안내
+# GearHub Campus 실습 문서 안내
 
 ## 문서 작성 전제
 
@@ -9,7 +9,8 @@
 - 기존 템플릿의 포트, API 경로, Kafka 토픽과 물리 테이블은 호환성을 위해 유지한다.
 - 발표 장표는 이 문서 세트에 포함하지 않는다.
 - 현재 코드를 기준으로 확인된 사실과 향후 제안을 구분하며, 수행하지 않은 회의나 사용자 검증을 수행한 것처럼 기록하지 않는다.
-- 제품은 교육기관·기업의 내부 장비 운영을 지원하는 B2B SaaS로 정의하되, 현재 구현은 조직 하나를 대상으로 한 단일 테넌트 MVP로 설명한다.
+- 제품은 대학교의 내부 장비 운영을 지원하는 B2B SaaS로 정의하며, 현재 구현은 한 학교 안의 학과·연구실·동아리를 분리하는 멀티그룹 MVP로 설명한다.
+- 01~08은 초기 단일 조직·대체재 아이디어에서 발전해 온 설계·실행 기록이다. 최종 구현과 충돌하는 내용은 09~10과 루트 README를 기준으로 해석한다.
 
 ## 문서 목록
 
@@ -23,8 +24,10 @@
 | [06_API_CONTRACT.md](./06_API_CONTRACT.md) | 프론트엔드와 서비스 간 API 계약 및 예시 | 가이드 2·3의 API 명세 |
 | [07_VALIDATION_AND_DEMO.md](./07_VALIDATION_AND_DEMO.md) | 인수 테스트 결과, 캡처 목록과 데모 순서 | 가이드 2의 동작 화면·통합 검증 |
 | [08_AGILE_EXECUTION_LOG.md](./08_AGILE_EXECUTION_LOG.md) | Sprint 0, 보드, 속도, 계획 대비 실적과 회고 액션 | 추가 Agile·MSA PDF의 Scrum 실행 증거 |
+| [09_CAMPUS_PIVOT_AND_AI.md](./09_CAMPUS_PIVOT_AND_AI.md) | 대학교 멀티그룹 전환, 완성된 업무 흐름, 관리자 AI 설계와 배운 점 | 최종 제품·AI 설계 기준 |
+| [10_FINAL_VALIDATION.md](./10_FINAL_VALIDATION.md) | Docker, 데이터, E2E, 테스트, 모델 성능과 발표 데모 증거 | 최종 검증 기준 |
 
-서비스 전체 요약과 실행 방법은 상위 문서 [SKALA_GEARHUB.md](../SKALA_GEARHUB.md)를 사용한다.
+서비스 전체 요약과 실행 방법은 루트 [readme.md](../../readme.md)와 상위 문서 [SKALA_GEARHUB.md](../SKALA_GEARHUB.md)를 사용한다.
 
 ## 가이드 요구사항 대응표
 
@@ -61,8 +64,9 @@
 ## 제출 전 최소 확인
 
 - [ ] 팀원 이름과 실제 담당을 Sprint 문서에 입력
-- [ ] 새 서비스명으로 Docker를 재기동하고 Eureka 등록 화면 확인
-- [ ] 학생·운영진 계정으로 Gateway 경유 화면 흐름 재검증
+- [x] 새 서비스명으로 전체 Docker Compose 재빌드·재기동
+- [x] 운영진 계정으로 Auth·Gateway 경유 그룹 및 AI 화면 재검증
+- [ ] 학생 계정으로 대여·반납 발표 동선 최종 리허설
 - [ ] 팀원 전원이 Swagger UI에서 담당 API를 최소 1회 실제 호출
 - [ ] `docs/evidence/screenshots`에 요청 전·후 화면 저장
 - [ ] Sprint Board의 최종 상태와 Done SP를 실제 팀 결과로 갱신

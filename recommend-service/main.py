@@ -4,7 +4,8 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from app.config.settings import settings
 from app.kafka.consumer import enrollment_consumer
-from app.router import recommend_router
+from app.router import analytics_router, recommend_router
+from app.service.analytics_service import demand_analytics_service
 
 logging.basicConfig(
     level=logging.INFO,
@@ -19,6 +20,13 @@ async def lifespan(app: FastAPI):
 
     # 시작 시
     logger.info(f"[{settings.app_name}] 서비스 시작")
+
+    # 분석 서비스 전용 테이블 준비
+    try:
+        demand_analytics_service.initialize()
+        logger.info("[Analytics] 분석 스키마 준비 완료")
+    except Exception as e:
+        logger.warning(f"[Analytics] 분석 스키마 준비 실패: {e}")
 
     # Eureka 등록
     try:
@@ -48,14 +56,15 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="Alternative Service",
-    description="SKALA GearHub - 보유 대체 교보재 추천 서비스",
-    version="0.0.1",
+    title="GearHub Demand Intelligence Service",
+    description="대체 장비 조회와 그룹별 장비 수요 예측 서비스",
+    version="1.0.0",
     lifespan=lifespan
 )
 
 # 라우터 등록
 app.include_router(recommend_router.router)
+app.include_router(analytics_router.router)
 
 
 @app.get("/health")

@@ -56,5 +56,17 @@ class CourseServiceClient:
             logger.error(f"[CourseClient] 전체 강의 조회 실패 - error: {e}")
             return []
 
+    async def get_analytics_assets(self) -> List[CourseResponse]:
+        """관리자 수요 예측의 현재 재고 계산용 전체 활성 자산."""
+        url = f"{self.base_url}/api/courses/internal/analytics/assets"
+        try:
+            async with httpx.AsyncClient(timeout=5.0) as client:
+                response = await client.get(url)
+                response.raise_for_status()
+                return [CourseResponse(**item) for item in response.json()]
+        except httpx.HTTPError as exc:
+            logger.error(f"[CourseClient] 분석용 자산 조회 실패 - error: {exc}")
+            return []
+
 
 course_client = CourseServiceClient()

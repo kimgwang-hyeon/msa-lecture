@@ -4,12 +4,12 @@
       <!-- 좌측 브랜딩 -->
       <div class="login-left">
         <div class="brand">
-          <span class="brand-logo">S</span>
-          <span class="brand-name">GearHub for SKALA</span>
+          <span class="brand-logo">G</span>
+          <span class="brand-name">GearHub Campus</span>
         </div>
         <div class="brand-content">
           <h2>조직 장비 운영을<br>더 간단하게</h2>
-          <p>보유 자산을 찾고 대여·구매 요청의 처리 현황을 확인하세요.</p>
+          <p>학교와 소속 그룹의 자산을 찾고 대여·반납·도입 현황을 확인하세요.</p>
           <ul class="feature-list">
             <li v-for="f in features" :key="f">
               <span class="dot"></span>{{ f }}
@@ -26,7 +26,7 @@
           <!-- 로그인 영역 -->
           <div v-if="!showRegister" class="section">
             <h3 class="section-title">로그인</h3>
-            <p class="section-desc">SKALA 파일럿 조직 계정으로 로그인합니다.</p>
+            <p class="section-desc">학교 계정으로 로그인해 소속 그룹을 선택합니다.</p>
             <button class="btn btn-primary btn-full" @click="handleOAuth">로그인</button>
             <div class="switch-link">
               계정이 없으신가요?
@@ -90,7 +90,7 @@ const success = ref('')
 
 const registerForm = ref({ name: '', email: '', password: '', role: 'STUDENT' })
 
-const features = ['조직 보유 자산 실시간 확인', '대여·신규 구매요청', '자산 운영자 승인 상태 추적']
+const features = ['학교 공용·그룹 전용 자산 조회', '대여 승인과 반납 확인', '관리자용 AI 수요예측']
 
 function handleOAuth() {
   auth.redirectToLogin()

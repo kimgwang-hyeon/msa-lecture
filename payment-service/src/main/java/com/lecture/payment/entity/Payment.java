@@ -28,6 +28,12 @@ public class Payment {
     @Column(name = "course_id", nullable = false)
     private Long courseId;
 
+    @Column(name = "request_id")
+    private Long requestId;
+
+    @Column(name = "group_id")
+    private Long groupId;
+
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal amount;
 

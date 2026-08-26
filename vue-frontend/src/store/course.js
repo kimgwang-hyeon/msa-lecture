@@ -10,6 +10,8 @@ export const categoryOptions = [
   { value: 'ELECTRONICS_IOT', label: '전자·IoT', icon: '⌁' },
   { value: 'MAKER', label: '메이커·건축', icon: '△' },
   { value: 'CAMERA_AUDIO', label: '촬영·음향', icon: '◉' },
+  { value: 'PRESENTATION', label: '발표·행사', icon: '▤' },
+  { value: 'ACCESSORY', label: '부속품', icon: '⌁' },
   { value: 'ETC', label: '기타', icon: '＋' }
 ]
 
@@ -56,11 +58,11 @@ export const useCourseStore = defineStore('course', () => {
     }
   }
 
-  async function fetchCourses() {
+  async function fetchCourses(groupId) {
     loading.value = true
     error.value = null
     try {
-      const res = await courseApi.getAll()
+      const res = await courseApi.getAll(groupId ? { groupId } : undefined)
       const raw = Array.isArray(res.data?.data)
         ? res.data.data
         : Array.isArray(res.data) ? res.data : []

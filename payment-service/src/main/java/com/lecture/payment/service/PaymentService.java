@@ -36,6 +36,8 @@ public class PaymentService {
                 Payment.builder()
                         .userId(request.getUserId())
                         .courseId(request.getCourseId())
+                        .requestId(request.getRequestId())
+                        .groupId(request.getGroupId())
                         .amount(request.getAmount())
                         .build()
         );
@@ -80,10 +82,17 @@ public class PaymentService {
         return PaymentDto.PaymentResponse.from(findPayment(id));
     }
 
-    public List<PaymentDto.PaymentResponse> getPayments(Payment.Status status) {
-        List<Payment> payments = status == null
-                ? paymentRepository.findAll()
-                : paymentRepository.findByStatus(status);
+    public List<PaymentDto.PaymentResponse> getPayments(Payment.Status status, Long groupId) {
+        List<Payment> payments;
+        if (status != null && groupId != null) {
+            payments = paymentRepository.findByStatusAndGroupId(status, groupId);
+        } else if (status != null) {
+            payments = paymentRepository.findByStatus(status);
+        } else if (groupId != null) {
+            payments = paymentRepository.findByGroupId(groupId);
+        } else {
+            payments = paymentRepository.findAll();
+        }
         return payments.stream()
                 .map(PaymentDto.PaymentResponse::from)
                 .collect(Collectors.toList());
@@ -106,6 +115,8 @@ public class PaymentService {
                         .paymentId(payment.getId())
                         .userId(payment.getUserId())
                         .courseId(payment.getCourseId())
+                        .requestId(payment.getRequestId())
+                        .groupId(payment.getGroupId())
                         .status(payment.getStatus().name())
                         .build()
         );

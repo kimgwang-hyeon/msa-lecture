@@ -6,17 +6,17 @@
       <section class="hero">
         <div class="container hero-grid">
           <div class="hero-copy fade-in-up">
-            <span class="eyebrow"><i></i> ORGANIZATION ASSET OPERATIONS</span>
-            <h1>조직의 장비를<br><em>찾고, 빌리고, 요청하세요.</em></h1>
-            <p>교육기관과 기업이 스마트폰부터 센서, 서버 자원까지 한곳에서 관리하고 구성원의 신청과 예산 검토를 연결합니다.</p>
+            <span class="eyebrow"><i></i> CAMPUS ASSET NETWORK</span>
+            <h1>학교와 그룹의 장비를<br><em>함께 빌리고 운영하세요.</em></h1>
+            <p>학과·연구실·동아리마다 별도 워크스페이스를 만들고, 학교 공용 자산과 그룹 전용 자산의 대여·반납·도입을 연결합니다.</p>
             <div class="hero-actions">
-              <router-link :to="auth.isAuthenticated ? '/courses' : '/login'" class="btn btn-primary btn-lg">
-                {{ auth.isAuthenticated ? '교보재 찾아보기' : 'GearHub 시작하기' }}
+              <router-link :to="auth.isAuthenticated ? '/groups' : '/login'" class="btn btn-primary btn-lg">
+                {{ auth.isAuthenticated ? '내 그룹 들어가기' : 'GearHub 시작하기' }}
               </router-link>
-              <router-link v-if="auth.isAuthenticated && !isOperator" to="/requests/new" class="btn btn-outline btn-lg">신규 교보재 제안</router-link>
+              <router-link v-if="auth.isAuthenticated" to="/groups" class="btn btn-outline btn-lg">그룹 선택</router-link>
             </div>
             <div class="trust-row">
-              <span>✓ 보유 현황 확인</span><span>✓ 간편 대여 신청</span><span>✓ 예산 승인 추적</span>
+              <span>✓ 그룹별 권한</span><span>✓ 대여·반납 추적</span><span>✓ AI 수요예측</span>
             </div>
           </div>
 
@@ -33,7 +33,7 @@
                 <span class="arrow">→</span>
               </div>
             </div>
-            <div class="workflow-foot"><span>MSA 기반 신청 흐름</span><strong>5 services connected</strong></div>
+            <div class="workflow-foot"><span>MSA 기반 자산 흐름</span><strong>5 services connected</strong></div>
           </div>
         </div>
       </section>
@@ -42,7 +42,7 @@
         <div class="container">
           <div class="section-heading">
             <div><span class="eyebrow">RESOURCE CATEGORIES</span><h2>팀과 전공을 넘나드는 업무·교육 장비</h2></div>
-            <router-link to="/courses" class="text-link">전체 교보재 보기 →</router-link>
+            <router-link :to="auth.isAuthenticated ? '/groups' : '/login'" class="text-link">그룹에서 자산 보기 →</router-link>
           </div>
           <div class="category-grid">
             <article v-for="item in categories" :key="item.title" class="category-card">
@@ -56,8 +56,8 @@
         <div class="container why-grid">
           <div class="why-copy">
             <span class="eyebrow">WHY GEARHUB</span>
-            <h2>구매하기 전에,<br>우리 조직에 이미 있는지 먼저.</h2>
-            <p>중복 구매를 줄이고 조직이 보유한 자원을 더 잘 활용할 수 있도록 대체 장비를 먼저 추천합니다.</p>
+            <h2>감이 아니라 데이터로,<br>다음 4주의 장비 수요를.</h2>
+            <p>18개월 요청 이력을 학습하고 단순 이동평균과 scikit-learn 모델을 비교해 관리자에게 부족 재고와 그룹 간 이동 대안을 보여줍니다.</p>
           </div>
           <div class="benefit-list">
             <div v-for="benefit in benefits" :key="benefit.title" class="benefit">
@@ -68,21 +68,19 @@
       </section>
     </main>
 
-    <footer><div class="container"><strong>GearHub for SKALA</strong><span>B2B Asset Operations · Agile MSA</span></div></footer>
+    <footer><div class="container"><strong>GearHub Campus</strong><span>Multi-group Asset Operations · Agile MSA · Applied ML</span></div></footer>
   </div>
 </template>
 
 <script setup>
-import { computed } from 'vue'
 import AppHeader from '@/components/AppHeader.vue'
 import { useAuthStore } from '@/store/auth.js'
 
 const auth = useAuthStore()
-const isOperator = computed(() => auth.user?.role === 'INSTRUCTOR')
 const workflow = [
-  { icon: '⌕', title: '보유 교보재 검색', desc: '실시간 가용 수량 확인' },
-  { icon: '✓', title: '대여 또는 구매 신청', desc: '목적과 근거를 간단히 작성' },
-  { icon: '◎', title: '자산 운영자 검토', desc: '승인 상태를 한눈에 추적' }
+  { icon: '⌂', title: '그룹 워크스페이스', desc: '학과·연구실·동아리별 공간' },
+  { icon: '↔', title: '대여와 반납', desc: '기간·승인·재고를 함께 추적' },
+  { icon: '✦', title: '관리자 수요예측', desc: '4주 부족 수량과 이동 대안' }
 ]
 const categories = [
   { icon: '▣', title: '스마트기기', desc: 'iPhone, Android, 태블릿' },
@@ -92,8 +90,8 @@ const categories = [
 ]
 const benefits = [
   { number: '01', title: '재고가 보이면 바로 대여', desc: '자산 운영자가 보유 수량과 신청을 같은 흐름에서 관리합니다.' },
-  { number: '02', title: '보유 대체재 먼저 추천', desc: '신규 구매요청 전에 같은 카테고리의 사용 가능한 장비를 확인합니다.' },
-  { number: '03', title: '결제 대신 예산 승인', desc: '구매 링크와 예상 총액을 바탕으로 조직 담당자가 승인 또는 반려합니다.' }
+  { number: '02', title: '도입 요청은 사람의 근거로', desc: '구성원이 필요성을 설명하고 그룹 관리자와 학교 관리자가 순서대로 검토합니다.' },
+  { number: '03', title: 'AI는 관리자 의사결정에', desc: '기준선과 모델 성능을 공개하고 수요·재고·대여기간을 함께 비교합니다.' }
 ]
 </script>
 

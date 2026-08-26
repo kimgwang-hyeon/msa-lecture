@@ -8,7 +8,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -16,113 +15,218 @@ import java.util.stream.Collectors;
 public class CourseService {
 
     private final CourseRepository courseRepository;
+    private final MemberServiceClient memberServiceClient;
 
-    /**
-     * 강의 등록 (강사만 가능 - SecurityConfig에서 role 검증)
-     */
     @Transactional
-    public CourseDto.CourseResponse createCourse(CourseDto.CreateRequest request, Long instructorId) {
+    public CourseDto.CourseResponse createCourse(CourseDto.CreateRequest request, Long operatorId) {
         Course.ItemType itemType = request.getItemType() == null
                 ? Course.ItemType.OWNED
                 : request.getItemType();
-        int totalQuantity = request.getTotalQuantity() == null
-                ? 1
-                : request.getTotalQuantity();
+        if (itemType != Course.ItemType.OWNED) {
+            throw new IllegalArgumentException("미보유 장비 도입 요청은 도입 요청 API를 사용해 주세요");
+        }
+
+        Course.Visibility visibility = resolveVisibility(
+                request.getVisibility(), request.getOwnerGroupId());
+        assertCanManageScope(operatorId, request.getOwnerGroupId(), visibility);
+
+        int totalQuantity = request.getTotalQuantity() == null ? 1 : request.getTotalQuantity();
+        int maxLoanDays = request.getMaxLoanDays() == null ? 7 : request.getMaxLoanDays();
 
         Course course = Course.builder()
-                .title(request.getTitle())
-                .description(request.getDescription())
+                .title(request.getTitle().trim())
+                .description(normalize(request.getDescription()))
                 .category(request.getCategory())
                 .price(request.getPrice())
-                .itemType(itemType)
+                .itemType(Course.ItemType.OWNED)
                 .totalQuantity(totalQuantity)
-                .availableQuantity(itemType == Course.ItemType.OWNED ? totalQuantity : 0)
-                .purchaseUrl(request.getPurchaseUrl())
-                .instructorId(instructorId)
-                .status(itemType == Course.ItemType.OWNED
-                        ? Course.Status.ACTIVE
-                        : Course.Status.INACTIVE)
+                .availableQuantity(totalQuantity)
+                .purchaseUrl(normalize(request.getPurchaseUrl()))
+                .ownerGroupId(request.getOwnerGroupId())
+                .visibility(visibility)
+                .pickupLocation(normalize(request.getPickupLocation()))
+                .maxLoanDays(maxLoanDays)
+                .instructorId(operatorId)
+                .status(Course.Status.ACTIVE)
                 .build();
 
         return CourseDto.CourseResponse.from(courseRepository.save(course));
     }
 
-    /**
-     * 강의 단건 조회
-     */
+    @Transactional
+    public CourseDto.CourseResponse createAcquisitionRequest(
+            CourseDto.InternalAcquisitionRequest request) {
+        Course course = Course.builder()
+                .title(request.getTitle().trim())
+                .description(normalize(request.getDescription()))
+                .category(request.getCategory())
+                .price(request.getPrice())
+                .itemType(Course.ItemType.PURCHASE_REQUEST)
+                .totalQuantity(request.getTotalQuantity() == null ? 1 : request.getTotalQuantity())
+                .availableQuantity(0)
+                .purchaseUrl(normalize(request.getPurchaseUrl()))
+                .ownerGroupId(request.getOwnerGroupId())
+                .visibility(Course.Visibility.GROUP)
+                .maxLoanDays(7)
+                .instructorId(request.getRequestedBy())
+                .status(Course.Status.INACTIVE)
+                .build();
+        return CourseDto.CourseResponse.from(courseRepository.save(course));
+    }
+
     public CourseDto.CourseResponse getCourse(Long id) {
+        return CourseDto.CourseResponse.from(findCourseById(id));
+    }
+
+    public CourseDto.CourseResponse getCourseForUser(Long id, Long userId) {
         Course course = findCourseById(id);
+        assertCanRead(userId, course);
         return CourseDto.CourseResponse.from(course);
     }
 
-    /**
-     * 전체 활성 강의 목록 조회
-     */
-    public List<CourseDto.CourseResponse> getAllCourses() {
+    public List<CourseDto.CourseResponse> getAllCourses(Long userId, Long groupId) {
+        if (groupId != null) {
+            assertMember(groupId, userId);
+        }
+
+        return courseRepository.findByStatus(Course.Status.ACTIVE).stream()
+                .filter(course -> course.getItemType() == Course.ItemType.OWNED)
+                .filter(course -> course.getVisibility() == Course.Visibility.ORGANIZATION
+                        || (groupId != null && groupId.equals(course.getOwnerGroupId())))
+                .map(CourseDto.CourseResponse::from)
+                .toList();
+    }
+
+    public List<CourseDto.CourseResponse> getAllAssetsInternal() {
         return courseRepository.findByStatus(Course.Status.ACTIVE).stream()
                 .filter(course -> course.getItemType() == Course.ItemType.OWNED)
                 .map(CourseDto.CourseResponse::from)
-                .collect(Collectors.toList());
+                .toList();
     }
 
-    /**
-     * 카테고리별 강의 조회
-     */
-    public List<CourseDto.CourseResponse> getCoursesByCategory(Course.Category category) {
-        return courseRepository.findByCategoryAndStatus(category, Course.Status.ACTIVE).stream()
-                .filter(course -> course.getItemType() == Course.ItemType.OWNED)
-                .map(CourseDto.CourseResponse::from)
-                .collect(Collectors.toList());
+    public List<CourseDto.CourseResponse> getCoursesByCategory(
+            Course.Category category,
+            Long userId,
+            Long groupId) {
+        return getAllCourses(userId, groupId).stream()
+                .filter(course -> course.getCategory() == category)
+                .toList();
     }
 
-    /**
-     * 강의 존재 여부 확인 (Enrollment Service → Course Service REST 호출용)
-     */
     public boolean existsCourse(Long id) {
         return courseRepository.existsById(id);
     }
 
-    /**
-     * 수강생 수 증가 (Enrollment Service 수강 활성화 시 호출)
-     */
     @Transactional
     public void increaseEnrollmentCount(Long courseId) {
-        Course course = findCourseById(courseId);
+        Course course = findCourseForUpdate(courseId);
         course.increaseEnrollmentCount();
     }
 
-    /**
-     * 교보재 대여 승인: 가용 수량 차감 + 이용 횟수 증가
-     */
     @Transactional
     public void borrowCourse(Long courseId) {
-        Course course = findCourseById(courseId);
+        Course course = findCourseForUpdate(courseId);
         course.borrowOne();
     }
 
-    /**
-     * 추천 서비스용: 카테고리별 미수강 강의 조회
-     * - excludeCourseIds: 이미 수강한 강의 ID 목록
-     */
+    @Transactional
+    public void returnCourse(Long courseId) {
+        Course course = findCourseForUpdate(courseId);
+        course.returnOne();
+    }
+
+    @Transactional
+    public CourseDto.CourseResponse receiveCourse(
+            Long courseId,
+            CourseDto.ReceiveRequest request) {
+        Course course = findCourseForUpdate(courseId);
+        course.receiveAsOwned(
+                request.getReceivedQuantity(),
+                request.getPickupLocation(),
+                request.getVisibility()
+        );
+        return CourseDto.CourseResponse.from(course);
+    }
+
     public List<CourseDto.CourseResponse> getRecommendCourses(
             Course.Category category, List<Long> excludeCourseIds) {
-
         List<Course> courses = excludeCourseIds.isEmpty()
                 ? courseRepository.findByCategoryAndStatus(category, Course.Status.ACTIVE)
                 : courseRepository.findByCategoryAndStatusAndIdNotIn(
                         category, Course.Status.ACTIVE, excludeCourseIds);
 
-        // 수강생 수 기준 내림차순 정렬
         return courses.stream()
                 .filter(course -> course.getItemType() == Course.ItemType.OWNED)
-                .filter(course -> course.getAvailableQuantity() != null && course.getAvailableQuantity() > 0)
+                .filter(course -> course.getAvailableQuantity() != null
+                        && course.getAvailableQuantity() > 0)
                 .sorted((a, b) -> b.getEnrollmentCount() - a.getEnrollmentCount())
                 .map(CourseDto.CourseResponse::from)
-                .collect(Collectors.toList());
+                .toList();
+    }
+
+    private void assertCanManageScope(
+            Long userId,
+            Long ownerGroupId,
+            Course.Visibility visibility) {
+        if (visibility == Course.Visibility.ORGANIZATION) {
+            if (!memberServiceClient.isOrganizationAdmin(userId)) {
+                throw new IllegalStateException("학교 공용 자산은 학교 관리자만 등록할 수 있습니다");
+            }
+            return;
+        }
+        if (ownerGroupId == null) {
+            throw new IllegalArgumentException("그룹 전용 자산에는 소유 그룹이 필요합니다");
+        }
+        MemberServiceClient.GroupAccess access = memberServiceClient.getGroupAccess(ownerGroupId, userId);
+        if (!access.isManager()) {
+            throw new IllegalStateException("그룹 관리자만 그룹 자산을 등록할 수 있습니다");
+        }
+    }
+
+    private void assertCanRead(Long userId, Course course) {
+        if (course.getVisibility() == Course.Visibility.ORGANIZATION) {
+            return;
+        }
+        if (userId == null || course.getOwnerGroupId() == null) {
+            throw new IllegalStateException("이 자산에 접근할 권한이 없습니다");
+        }
+        assertMember(course.getOwnerGroupId(), userId);
+    }
+
+    private void assertMember(Long groupId, Long userId) {
+        if (userId == null) {
+            throw new IllegalStateException("그룹 자산 조회에는 사용자 정보가 필요합니다");
+        }
+        if (!memberServiceClient.getGroupAccess(groupId, userId).isMember()) {
+            throw new IllegalStateException("이 그룹에 접근할 권한이 없습니다");
+        }
+    }
+
+    private Course.Visibility resolveVisibility(
+            Course.Visibility visibility,
+            Long ownerGroupId) {
+        if (visibility != null) {
+            return visibility;
+        }
+        return ownerGroupId == null
+                ? Course.Visibility.ORGANIZATION
+                : Course.Visibility.GROUP;
     }
 
     private Course findCourseById(Long id) {
         return courseRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("강의를 찾을 수 없습니다: " + id));
+                .orElseThrow(() -> new IllegalArgumentException("자산을 찾을 수 없습니다: " + id));
+    }
+
+    private Course findCourseForUpdate(Long id) {
+        return courseRepository.findByIdForUpdate(id)
+                .orElseThrow(() -> new IllegalArgumentException("자산을 찾을 수 없습니다: " + id));
+    }
+
+    private String normalize(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        return value.trim();
     }
 }

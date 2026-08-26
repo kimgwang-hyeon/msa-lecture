@@ -1,178 +1,56 @@
 <template>
-  <div class="page-shell">
-    <AppHeader />
-    <main class="page-main">
-      <div class="container">
-        <div class="page-heading">
-          <div><span class="eyebrow">ASSET OPERATIONS DESK</span><h1 class="page-title">승인 관리</h1><p class="page-subtitle">조직 구성원의 대여 신청과 신규 장비 예산을 검토합니다.</p></div>
-          <button class="btn btn-ghost" :disabled="loading" @click="loadAll">↻ 새로고침</button>
-        </div>
+  <div class="page-shell"><AppHeader /><main class="page-main"><div class="container">
+    <template v-if="isManager">
+      <div class="page-heading"><div><span class="eyebrow">GROUP OPERATIONS DESK</span><h1 class="page-title">운영 데스크</h1><p class="page-subtitle">대여 승인부터 반납 확인, 도입 검토와 입고까지 처리합니다.</p></div><button class="btn btn-ghost" :disabled="loading" @click="loadAll">↻ 새로고침</button></div>
+      <div class="summary-grid admin-summary"><div class="summary-card surface"><span class="summary-label">대여 승인</span><strong class="summary-value">{{ loans.length }}</strong></div><div class="summary-card surface"><span class="summary-label">반납 확인</span><strong class="summary-value warning">{{ returns.length }}</strong></div><div class="summary-card surface"><span class="summary-label">도입 필요성 검토</span><strong class="summary-value">{{ acquisitions.length }}</strong></div><div class="summary-card surface"><span class="summary-label">입고 대기</span><strong class="summary-value">{{ intake.length }}</strong></div></div>
+      <div v-if="message" class="success-box feedback">{{ message }}</div><div v-if="error" class="error-box feedback">{{ error }}</div>
+      <div class="tabs"><button v-for="item in tabs" :key="item.key" :class="{active:tab===item.key}" @click="tab=item.key">{{ item.label }} <span>{{ item.count }}</span></button></div>
+      <div v-if="loading" class="loading-state surface"><div class="spinner"></div></div>
+      <div v-else-if="currentItems.length" class="approval-list">
+        <article v-for="item in currentItems" :key="item.id??item.paymentId" class="approval-card surface">
+          <div class="approval-main"><span class="request-type">{{ tab.toUpperCase() }} · {{ requestNumber(item) }}</span><h3>{{ item.course?.title||`자산 #${item.courseId}` }}</h3><p>{{ item.reason||item.course?.description||'검토할 요청입니다.' }}</p><div class="meta"><span>요청자 #{{ item.userId }}</span><span>{{ categoryLabel(item.course?.category) }}</span><span v-if="item.course?.totalQuantity">{{ item.course.totalQuantity }}개</span><span v-if="item.requestedFrom">{{ item.requestedFrom }} → {{ item.dueDate }}</span><span v-if="item.course?.availableQuantity!=null">가용 {{ item.course.availableQuantity }}개</span><a v-if="item.course?.purchaseUrl" :href="item.course.purchaseUrl" target="_blank" rel="noopener">구매 링크 ↗</a></div></div>
 
-        <div class="summary-grid">
-          <div class="summary-card surface"><span class="summary-label">대여 승인 대기</span><strong class="summary-value">{{ loans.length }}</strong></div>
-          <div class="summary-card surface"><span class="summary-label">예산 검토 대기</span><strong class="summary-value budget">{{ budgets.length }}</strong></div>
-          <div class="summary-card surface"><span class="summary-label">현재 처리 대상 금액</span><strong class="summary-value money-value">{{ money(totalBudget) }}</strong></div>
-        </div>
-
-        <div v-if="message" class="success-box action-message">{{ message }}</div>
-        <div v-if="error" class="error-box action-message">{{ error }}</div>
-
-        <div class="tabs">
-          <button :class="{ active: tab === 'loan' }" @click="tab = 'loan'">대여 신청 <span>{{ loans.length }}</span></button>
-          <button :class="{ active: tab === 'budget' }" @click="tab = 'budget'">예산 검토 <span>{{ budgets.length }}</span></button>
-        </div>
-
-        <div v-if="loading" class="loading-state surface"><div class="spinner"></div></div>
-        <div v-else-if="tab === 'loan' && loans.length" class="approval-list">
-          <article v-for="item in loans" :key="item.id" class="approval-card surface">
-            <div class="approval-main">
-              <span class="request-type">LOAN · REQ-{{ String(item.id).padStart(4, '0') }}</span>
-              <h3>{{ item.course?.title }}</h3>
-              <p class="purpose">“{{ item.reason }}”</p>
-              <div class="meta"><span>구성원 #{{ item.userId }}</span><span>{{ item.course?.category }}</span><span>가용 {{ item.course?.availableQuantity }}개</span><span>{{ date(item.createdAt) }}</span></div>
-            </div>
-            <div class="approval-actions">
-              <input v-model.trim="reasons[item.id]" class="reason-input" placeholder="반려 시 사유 입력" />
-              <div><button class="btn btn-danger btn-sm" :disabled="busyId === item.id" @click="rejectLoan(item)">반려</button><button class="btn btn-primary btn-sm" :disabled="busyId === item.id" @click="approveLoan(item)">대여 승인</button></div>
-            </div>
-          </article>
-        </div>
-
-        <div v-else-if="tab === 'budget' && budgets.length" class="approval-list">
-          <article v-for="item in budgets" :key="item.paymentId" class="approval-card surface budget-card">
-            <div class="approval-main">
-              <span class="request-type">BUDGET · PAY-{{ String(item.paymentId).padStart(4, '0') }}</span>
-              <h3>{{ item.course?.title || `신규 교보재 #${item.courseId}` }}</h3>
-              <p class="purpose">{{ item.course?.description }}</p>
-              <div class="meta"><span>구성원 #{{ item.userId }}</span><span>{{ categoryName(item.course?.category) }}</span><span>{{ item.course?.totalQuantity || 1 }}개</span><a v-if="item.course?.purchaseUrl" :href="item.course.purchaseUrl" target="_blank" rel="noopener">구매 링크 ↗</a></div>
-            </div>
-            <div class="budget-amount"><small>검토 총액</small><strong>{{ money(item.amount) }}</strong><span>{{ date(item.createdAt) }}</span></div>
-            <div class="approval-actions compact"><button class="btn btn-danger btn-sm" :disabled="busyId === item.paymentId" @click="rejectBudget(item)">예산 반려</button><button class="btn btn-primary btn-sm" :disabled="busyId === item.paymentId" @click="approveBudget(item)">예산 승인</button></div>
-          </article>
-        </div>
-
-        <div v-else class="empty-state surface"><span class="empty-icon">✓</span><strong>현재 검토할 신청이 없습니다.</strong><p>새 신청이 들어오면 이 화면에 표시됩니다.</p></div>
+          <div v-if="tab==='loan'||tab==='acquisition'" class="review-actions"><input v-model.trim="reviewComments[item.id]" class="reason-input" placeholder="반려 시 사유" /><div><button class="btn btn-danger btn-sm" :disabled="busyId===item.id" @click="reject(item)">반려</button><button class="btn btn-primary btn-sm" :disabled="busyId===item.id" @click="tab==='loan'?approveLoan(item):approveAcquisition(item)">{{ tab==='loan'?'대여 승인':'그룹 승인' }}</button></div></div>
+          <div v-else-if="tab==='return'" class="review-actions compact"><span class="action-hint">장비 수량과 상태를 확인한 뒤 완료하세요.</span><button class="btn btn-primary btn-sm" :disabled="busyId===item.id" @click="confirmReturn(item)">반납 확인·재고 복원</button></div>
+          <div v-else-if="tab==='budget'" class="budget-actions"><div><small>검토 금액</small><strong>{{ money(item.amount) }}</strong></div><div><button class="btn btn-danger btn-sm" :disabled="busyId===item.paymentId" @click="reviewBudget(item,false)">예산 반려</button><button class="btn btn-primary btn-sm" :disabled="busyId===item.paymentId" @click="reviewBudget(item,true)">예산 승인</button></div></div>
+          <div v-else-if="tab==='intake'" class="intake-actions"><div class="intake-fields"><input v-model.number="intakeForms[item.id].receivedQuantity" type="number" min="1" class="mini-input" title="입고 수량" /><input v-model.trim="intakeForms[item.id].pickupLocation" class="mini-input location" placeholder="수령·반납 장소" /><select v-model="intakeForms[item.id].visibility" class="mini-input"><option value="GROUP">그룹 전용</option><option v-if="auth.isInstructor" value="ORGANIZATION">학교 공용</option></select></div><button class="btn btn-primary btn-sm" :disabled="busyId===item.id" @click="receive(item)">입고 완료·자산 전환</button></div>
+        </article>
       </div>
-    </main>
-  </div>
+      <div v-else class="empty-state surface"><span class="empty-icon">✓</span><strong>이 단계에서 처리할 요청이 없습니다.</strong><p>워크플로 상태가 바뀌면 해당 탭에 표시됩니다.</p></div>
+    </template>
+    <div v-else class="empty-state surface"><strong>그룹 관리자만 운영 데스크에 접근할 수 있습니다.</strong><router-link :to="`/groups/${groupId}`" class="btn btn-outline">그룹 홈</router-link></div>
+  </div></main></div>
 </template>
 
 <script setup>
 import { computed, onMounted, reactive, ref } from 'vue'
+import { useRoute } from 'vue-router'
 import AppHeader from '@/components/AppHeader.vue'
 import { courseApi } from '@/api/course.js'
 import { enrollmentApi } from '@/api/enrollment.js'
 import { paymentApi } from '@/api/payment.js'
+import { useAuthStore } from '@/store/auth.js'
 import { categoryLabel } from '@/store/course.js'
-
-const tab = ref('loan')
-const loans = ref([])
-const budgets = ref([])
-const loading = ref(true)
-const busyId = ref(null)
-const reasons = reactive({})
-const message = ref('')
-const error = ref('')
-const totalBudget = computed(() => budgets.value.reduce((sum, item) => sum + Number(item.amount || 0), 0))
-
-function money(value) { return `${Number(value || 0).toLocaleString()}원` }
-function date(value) { return value ? new Intl.DateTimeFormat('ko-KR', { dateStyle: 'medium' }).format(new Date(value)) : '-' }
-function categoryName(value) { return categoryLabel(value) }
-function resetMessage() { message.value = ''; error.value = '' }
-
-async function loadAll() {
-  loading.value = true
-  resetMessage()
-  try {
-    const [loanRes, paymentRes] = await Promise.all([
-      enrollmentApi.getPending('LOAN'),
-      paymentApi.getPending()
-    ])
-    loans.value = Array.isArray(loanRes.data?.data) ? loanRes.data.data : []
-    const payments = Array.isArray(paymentRes.data?.data) ? paymentRes.data.data : []
-    budgets.value = await Promise.all(payments.map(async payment => {
-      try {
-        const res = await courseApi.getById(payment.courseId)
-        return { ...payment, course: res.data?.data ?? res.data }
-      } catch {
-        return payment
-      }
-    }))
-  } catch (e) {
-    error.value = e.response?.data?.message || '승인 대기 목록을 불러오지 못했습니다.'
-  } finally {
-    loading.value = false
-  }
-}
-
-async function approveLoan(item) {
-  resetMessage(); busyId.value = item.id
-  try {
-    await enrollmentApi.approve(item.id)
-    loans.value = loans.value.filter(row => row.id !== item.id)
-    message.value = `${item.course?.title} 대여 신청을 승인했습니다.`
-  } catch (e) { error.value = e.response?.data?.message || '대여 승인에 실패했습니다.' }
-  finally { busyId.value = null }
-}
-async function rejectLoan(item) {
-  resetMessage()
-  if (!reasons[item.id]) { error.value = '반려 사유를 입력해 주세요.'; return }
-  busyId.value = item.id
-  try {
-    await enrollmentApi.reject(item.id, reasons[item.id])
-    loans.value = loans.value.filter(row => row.id !== item.id)
-    message.value = `${item.course?.title} 대여 신청을 반려했습니다.`
-  } catch (e) { error.value = e.response?.data?.message || '대여 반려에 실패했습니다.' }
-  finally { busyId.value = null }
-}
-async function approveBudget(item) {
-  resetMessage(); busyId.value = item.paymentId
-  try {
-    await paymentApi.approve(item.paymentId)
-    budgets.value = budgets.value.filter(row => row.paymentId !== item.paymentId)
-    message.value = `${item.course?.title || '신규 교보재'} 예산을 승인했습니다.`
-  } catch (e) { error.value = e.response?.data?.message || '예산 승인에 실패했습니다.' }
-  finally { busyId.value = null }
-}
-async function rejectBudget(item) {
-  resetMessage(); busyId.value = item.paymentId
-  try {
-    await paymentApi.reject(item.paymentId)
-    budgets.value = budgets.value.filter(row => row.paymentId !== item.paymentId)
-    message.value = `${item.course?.title || '신규 교보재'} 예산을 반려했습니다.`
-  } catch (e) { error.value = e.response?.data?.message || '예산 반려에 실패했습니다.' }
-  finally { busyId.value = null }
-}
-
+import { useGroupStore } from '@/store/group.js'
+const route=useRoute(),auth=useAuthStore(),groupStore=useGroupStore(),groupId=computed(()=>Number(route.params.groupId)),group=computed(()=>groupStore.currentGroup),isManager=computed(()=>auth.isInstructor||group.value?.currentRole==='MANAGER')
+const tab=ref('loan'),loans=ref([]),returns=ref([]),acquisitions=ref([]),budgets=ref([]),intake=ref([]),loading=ref(true),busyId=ref(null),message=ref(''),error=ref(''),reviewComments=reactive({}),intakeForms=reactive({})
+const tabs=computed(()=>[{key:'loan',label:'대여 승인',count:loans.value.length},{key:'return',label:'반납 확인',count:returns.value.length},{key:'acquisition',label:'도입 검토',count:acquisitions.value.length},...(auth.isInstructor?[{key:'budget',label:'학교 예산',count:budgets.value.length}]:[]),{key:'intake',label:'입고',count:intake.value.length}])
+const currentItems=computed(()=>({loan:loans.value,return:returns.value,acquisition:acquisitions.value,budget:budgets.value,intake:intake.value}[tab.value]||[]))
+const requestNumber=item=>item.paymentId?`PAY-${String(item.paymentId).padStart(4,'0')}`:`REQ-${String(item.id).padStart(4,'0')}`,money=value=>`${Number(value||0).toLocaleString()}원`
+const explain=cause=>cause.response?.data?.message||cause.response?.data?.detail||cause.response?.data?.error||'요청을 처리하지 못했습니다.'
+async function groupRequests(type,status){const res=await enrollmentApi.getGroupRequests(groupId.value,type,status);return res.data?.data??[]}
+async function attachCourses(payments){return Promise.all(payments.map(async payment=>{try{const res=await courseApi.getById(payment.courseId);return{...payment,course:res.data?.data??res.data}}catch{return payment}}))}
+async function loadAll(){loading.value=true;error.value='';try{await groupStore.loadGroup(groupId.value);if(!isManager.value)return;const tasks=[groupRequests('LOAN','PENDING'),groupRequests('LOAN','RETURN_REQUESTED'),groupRequests('PURCHASE','PENDING'),groupRequests('PURCHASE','BUDGET_APPROVED')];const [loanRows,returnRows,acquisitionRows,intakeRows]=await Promise.all(tasks);loans.value=loanRows;returns.value=returnRows;acquisitions.value=acquisitionRows;intake.value=intakeRows;for(const item of intakeRows)intakeForms[item.id]??={receivedQuantity:item.course?.totalQuantity||1,pickupLocation:item.course?.pickupLocation||'',visibility:'GROUP'};if(auth.isInstructor){const res=await paymentApi.getPending(groupId.value);budgets.value=await attachCourses(res.data?.data??[])}else budgets.value=[]}catch(cause){error.value=explain(cause)}finally{loading.value=false}}
+async function act(item,action,success){busyId.value=item.id;error.value='';try{await action();message.value=success;await loadAll()}catch(cause){error.value=explain(cause)}finally{busyId.value=null}}
+const approveLoan=item=>act(item,()=>enrollmentApi.approve(item.id),`${item.course?.title} 대여를 승인했습니다.`)
+const approveAcquisition=item=>act(item,()=>enrollmentApi.approveAcquisition(item.id),`${item.course?.title} 도입 필요성을 승인했습니다.`)
+function reject(item){if(!reviewComments[item.id]){error.value='반려 사유를 입력해 주세요.';return}return act(item,()=>enrollmentApi.reject(item.id,reviewComments[item.id]),'요청을 반려했습니다.')}
+const confirmReturn=item=>act(item,()=>enrollmentApi.confirmReturn(item.id),`${item.course?.title} 반납을 확인하고 재고를 복원했습니다.`)
+async function reviewBudget(item,approved){busyId.value=item.paymentId;error.value='';try{await(approved?paymentApi.approve(item.paymentId):paymentApi.reject(item.paymentId));budgets.value=budgets.value.filter(row=>row.paymentId!==item.paymentId);message.value=approved?'학교 예산을 승인했습니다. 이벤트 처리 후 입고 탭으로 이동합니다.':'학교 예산을 반려했습니다.'}catch(cause){error.value=explain(cause)}finally{busyId.value=null}}
+const receive=item=>act(item,()=>enrollmentApi.receive(item.id,intakeForms[item.id]),`${item.course?.title}을 대여 가능한 자산으로 전환했습니다.`)
 onMounted(loadAll)
 </script>
 
 <style scoped>
-.summary-value.budget { color: var(--color-warning); }
-.money-value { font-size: 19px; }
-.action-message { margin-bottom: 15px; }
-.tabs { display: flex; gap: 8px; margin-bottom: 14px; }
-.tabs button { display: flex; align-items: center; gap: 7px; padding: 9px 14px; color: var(--color-text-secondary); background: #fff; border: 1px solid var(--color-border); border-radius: 10px; font-size: 11px; font-weight: 700; }
-.tabs button.active { color: #fff; background: var(--color-primary); border-color: var(--color-primary); }
-.tabs span { opacity: .75; }
-.approval-list { display: flex; flex-direction: column; gap: 11px; }
-.approval-card { display: grid; grid-template-columns: minmax(0, 1fr) 270px; align-items: center; gap: 20px; padding: 20px; }
-.budget-card { grid-template-columns: minmax(0, 1fr) 140px 190px; }
-.request-type { color: var(--color-primary); font-size: 9px; font-weight: 800; letter-spacing: .09em; }
-.approval-main h3 { margin-top: 5px; color: var(--color-navy); font-size: 15px; }
-.purpose { margin-top: 5px; color: var(--color-text-secondary); font-size: 11px; }
-.meta { display: flex; flex-wrap: wrap; gap: 13px; margin-top: 9px; color: var(--color-text-muted); font-size: 9px; }
-.meta a { color: var(--color-primary); font-weight: 700; }
-.approval-actions { display: flex; flex-direction: column; gap: 8px; }
-.approval-actions > div, .approval-actions.compact { display: flex; justify-content: flex-end; gap: 7px; }
-.reason-input { width: 100%; height: 36px; padding: 0 10px; border: 1px solid var(--color-border); border-radius: 9px; outline: none; font-size: 10px; }
-.reason-input:focus { border-color: var(--color-primary); }
-.budget-amount { display: flex; flex-direction: column; text-align: right; }
-.budget-amount small, .budget-amount span { color: var(--color-text-muted); font-size: 9px; }
-.budget-amount strong { margin: 3px 0; color: var(--color-navy); font-size: 17px; }
-@media (max-width: 800px) {
-  .approval-card, .budget-card { grid-template-columns: 1fr; }
-  .approval-actions > div, .approval-actions.compact { justify-content: flex-start; }
-  .budget-amount { text-align: left; }
-}
+.admin-summary{grid-template-columns:repeat(4,1fr)}.summary-value.warning{color:var(--color-warning)}.feedback{margin-bottom:14px}.tabs{display:flex;gap:7px;margin-bottom:14px;overflow-x:auto}.tabs button{display:flex;align-items:center;gap:6px;padding:9px 13px;color:var(--color-text-secondary);background:#fff;border:1px solid var(--color-border);border-radius:10px;font-size:10px;font-weight:700;white-space:nowrap}.tabs button.active{color:#fff;background:var(--color-primary);border-color:var(--color-primary)}.tabs span{opacity:.75}.approval-list{display:flex;flex-direction:column;gap:11px}.approval-card{display:grid;grid-template-columns:minmax(0,1fr) minmax(260px,360px);align-items:center;gap:20px;padding:20px}.request-type{color:var(--color-primary);font-size:8px;font-weight:800;letter-spacing:.1em}.approval-main h3{margin-top:5px;color:var(--color-navy);font-size:15px}.approval-main>p{margin-top:5px;color:var(--color-text-secondary);font-size:10px}.meta{display:flex;flex-wrap:wrap;gap:11px;margin-top:8px;color:var(--color-text-muted);font-size:8px}.meta a{color:var(--color-primary);font-weight:700}.review-actions{display:flex;flex-direction:column;gap:8px}.review-actions>div,.budget-actions>div:last-child{display:flex;justify-content:flex-end;gap:7px}.reason-input,.mini-input{height:36px;padding:0 10px;border:1px solid var(--color-border);border-radius:9px;outline:none;font-size:9px}.review-actions.compact{align-items:flex-end}.action-hint{color:var(--color-text-muted);font-size:9px}.budget-actions{display:flex;align-items:center;justify-content:flex-end;gap:18px}.budget-actions>div:first-child{display:flex;flex-direction:column;text-align:right}.budget-actions small{color:var(--color-text-muted);font-size:8px}.budget-actions strong{color:var(--color-navy);font-size:16px}.intake-actions{display:flex;flex-direction:column;align-items:flex-end;gap:8px}.intake-fields{display:grid;grid-template-columns:65px 1fr 100px;gap:6px;width:100%}.mini-input.location{min-width:110px}@media(max-width:850px){.admin-summary{grid-template-columns:repeat(2,1fr)}.approval-card{grid-template-columns:1fr}.review-actions.compact,.intake-actions{align-items:flex-start}.review-actions>div,.budget-actions>div:last-child{justify-content:flex-start}.budget-actions{justify-content:flex-start}.budget-actions>div:first-child{text-align:left}}@media(max-width:560px){.intake-fields{grid-template-columns:1fr}.admin-summary{grid-template-columns:1fr 1fr}}
 </style>
