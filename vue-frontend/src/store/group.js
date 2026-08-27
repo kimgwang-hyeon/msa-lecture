@@ -6,6 +6,7 @@ export const useGroupStore = defineStore('group', () => {
   const groups = ref([])
   const currentGroup = ref(null)
   const loading = ref(false)
+  const loaded = ref(false)
   const error = ref('')
 
   const isManager = computed(() => currentGroup.value?.currentRole === 'MANAGER')
@@ -16,6 +17,7 @@ export const useGroupStore = defineStore('group', () => {
     try {
       const response = await groupApi.getMyGroups()
       groups.value = response.data?.data ?? []
+      loaded.value = true
       const savedId = Number(sessionStorage.getItem('current_group_id'))
       if (!currentGroup.value && savedId) {
         currentGroup.value = groups.value.find(group => group.id === savedId) ?? null
@@ -23,6 +25,7 @@ export const useGroupStore = defineStore('group', () => {
       return groups.value
     } catch (cause) {
       groups.value = []
+      loaded.value = false
       error.value = cause.response?.data?.message || cause.response?.data?.detail || '그룹 목록을 불러오지 못했습니다.'
       throw cause
     } finally {
@@ -51,8 +54,9 @@ export const useGroupStore = defineStore('group', () => {
   function clear() {
     groups.value = []
     currentGroup.value = null
+    loaded.value = false
     sessionStorage.removeItem('current_group_id')
   }
 
-  return { groups, currentGroup, loading, error, isManager, fetchGroups, loadGroup, selectGroup, clear }
+  return { groups, currentGroup, loading, loaded, error, isManager, fetchGroups, loadGroup, selectGroup, clear }
 })

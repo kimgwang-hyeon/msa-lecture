@@ -60,7 +60,6 @@ export const useAuthStore = defineStore('auth', () => {
   async function fetchUser() {
     try {
       const res = await authApi.getMe()
-      console.log('[AuthStore] /me response =', res.data)
 
       const userData = res?.data?.data ?? res?.data
 
@@ -130,7 +129,6 @@ export const useAuthStore = defineStore('auth', () => {
 
   async function handleCallback(code) {
     const res = await authApi.exchangeCode(code)
-    console.log('[AuthStore] token response =', res.data)
 
     const token = res?.data?.access_token
 

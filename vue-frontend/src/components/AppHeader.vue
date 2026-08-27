@@ -127,7 +127,7 @@ const groupPath = suffix => `/groups/${groupId.value}${suffix}`
 
 async function syncGroup(id) {
   if (!auth.isAuthenticated) return
-  if (!groupStore.groups.length) await groupStore.fetchGroups().catch(() => {})
+  if (!groupStore.loaded) await groupStore.fetchGroups().catch(() => {})
   if (id) await groupStore.loadGroup(id).catch(() => {})
 }
 
