@@ -20,6 +20,8 @@ class CourseCategory(str, Enum):
     ELECTRONICS_IOT = "ELECTRONICS_IOT"
     MAKER = "MAKER"
     CAMERA_AUDIO = "CAMERA_AUDIO"
+    PRESENTATION = "PRESENTATION"
+    ACCESSORY = "ACCESSORY"
     ETC = "ETC"
 
 
@@ -33,6 +35,10 @@ class CourseResponse(BaseModel):
     totalQuantity: int = 1
     availableQuantity: int = 1
     purchaseUrl: Optional[str] = None
+    ownerGroupId: Optional[int] = None
+    visibility: str = "ORGANIZATION"
+    pickupLocation: Optional[str] = None
+    maxLoanDays: int = 7
     instructorId: int
     enrollmentCount: int
     status: str

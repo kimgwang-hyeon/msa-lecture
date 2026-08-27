@@ -1,21 +1,24 @@
 import json
 import logging
 import threading
+from datetime import date
+
 from kafka import KafkaConsumer
+
+from app.analytics.repository import analytics_repository
 from app.config.settings import settings
 
 logger = logging.getLogger(__name__)
 
 
-class EnrollmentCompletedConsumer:
-    """
-    Kafka Consumer: enrollment.completed 이벤트 수신
-    - Enrollment Service가 수강 활성화 후 발행
-    - 실시간 추천 캐시 갱신 트리거 (실습 수준: 로그 처리)
-    """
+class RentalEventConsumer:
+    """기존 완료 이벤트와 신규 대여 생명주기 이벤트를 함께 수신한다."""
 
     def __init__(self):
-        self.topic = settings.kafka_topic_enrollment_completed
+        self.topics = [
+            settings.kafka_topic_enrollment_completed,
+            settings.kafka_topic_rental_lifecycle,
+        ]
         self.consumer = None
         self._running = False
 
@@ -24,7 +27,7 @@ class EnrollmentCompletedConsumer:
         self._running = True
         thread = threading.Thread(target=self._consume, daemon=True)
         thread.start()
-        logger.info(f"[KafkaConsumer] 시작 - topic: {self.topic}")
+        logger.info("[KafkaConsumer] 시작 - topics: %s", self.topics)
 
     def stop(self):
         self._running = False
@@ -34,7 +37,7 @@ class EnrollmentCompletedConsumer:
     def _consume(self):
         try:
             self.consumer = KafkaConsumer(
-                self.topic,
+                *self.topics,
                 bootstrap_servers=settings.kafka_bootstrap_servers,
                 group_id=settings.kafka_consumer_group_id,
                 auto_offset_reset="earliest",
@@ -47,7 +50,7 @@ class EnrollmentCompletedConsumer:
                 for message in self.consumer:
                     if not self._running:
                         break
-                    self._handle_message(message.value)
+                    self._handle_message(message.topic, message.value)
 
         except Exception as e:
             logger.error(f"[KafkaConsumer] 오류 발생: {e}")
@@ -55,27 +58,53 @@ class EnrollmentCompletedConsumer:
             if self.consumer:
                 self.consumer.close()
 
-    def _handle_message(self, event: dict):
-        """
-        enrollment.completed 이벤트 처리
-        - enrollmentId, userId, courseId 추출
-        - 추천 캐시 갱신 트리거 (실습: 로그로 대체)
-        """
+    def _handle_message(self, topic: str, event: dict):
         try:
-            enrollment_id = event.get("enrollmentId")
-            user_id = event.get("userId")
-            course_id = event.get("courseId")
+            if topic == settings.kafka_topic_rental_lifecycle:
+                analytics_repository.upsert_event({
+                    "event_id": event["eventId"],
+                    "event_time": event["occurredAt"],
+                    "event_type": event["eventType"],
+                    "request_id": event.get("requestId"),
+                    "user_id": event.get("userId"),
+                    "group_id": event["groupId"],
+                    "asset_id": event.get("assetId"),
+                    "category": event["category"],
+                    "quantity": event.get("quantity", 1),
+                    "loan_days": self._loan_days(
+                        event.get("requestedFrom"), event.get("dueDate")
+                    ),
+                })
+                logger.info(
+                    "[KafkaConsumer] rental.lifecycle 저장 - type: %s, requestId: %s",
+                    event.get("eventType"),
+                    event.get("requestId"),
+                )
+                return
 
             logger.info(
-                f"[KafkaConsumer] enrollment.completed 수신 - "
-                f"enrollmentId: {enrollment_id}, userId: {user_id}, courseId: {course_id}"
+                "[KafkaConsumer] enrollment.completed 수신 - enrollmentId: %s",
+                event.get("enrollmentId"),
             )
-
-            # 실습 포인트: 여기서 캐시 갱신 또는 추천 재계산 로직 추가 가능
-            # 예: recommend_cache.invalidate(user_id)
 
         except Exception as e:
             logger.error(f"[KafkaConsumer] 메시지 처리 실패: {e}, event: {event}")
 
+    @staticmethod
+    def _loan_days(requested_from, due_date) -> int | None:
+        if not requested_from or not due_date:
+            return None
+        start = RentalEventConsumer._as_date(requested_from)
+        end = RentalEventConsumer._as_date(due_date)
+        return max(1, (end - start).days + 1)
 
-enrollment_consumer = EnrollmentCompletedConsumer()
+    @staticmethod
+    def _as_date(value) -> date:
+        if isinstance(value, date):
+            return value
+        if isinstance(value, (list, tuple)):
+            return date(int(value[0]), int(value[1]), int(value[2]))
+        return date.fromisoformat(str(value))
+
+
+enrollment_consumer = RentalEventConsumer()

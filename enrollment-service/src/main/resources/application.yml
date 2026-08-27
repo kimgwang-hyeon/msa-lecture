@@ -65,12 +65,15 @@ service:
     url: http://asset-service:8082
   budget-service:
     url: http://budget-service:8084
+  member-service:
+    url: http://member-service:8081
 
 # Kafka 토픽명
 kafka:
   topic:
     payment-completed: payment.completed
     enrollment-completed: enrollment.completed
+    rental-lifecycle: rental.lifecycle
 
 springdoc:
   api-docs:

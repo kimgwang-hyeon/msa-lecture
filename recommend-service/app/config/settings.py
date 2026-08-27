@@ -25,6 +25,15 @@ class Settings(BaseSettings):
     kafka_bootstrap_servers: str = "localhost:9092"
     kafka_consumer_group_id: str = "alternative-service"
     kafka_topic_enrollment_completed: str = "enrollment.completed"
+    kafka_topic_rental_lifecycle: str = "rental.lifecycle"
+
+    # Analytics database (same physical MariaDB, logically owned tables)
+    db_host: str = "localhost"
+    db_port: int = 3379
+    db_user: str = "manager"
+    db_password: str = "SqlDba-1"
+    db_name: str = "lecture_db"
+    forecast_horizon_weeks: int = 4
 
     class Config:
         env_file = ".env"

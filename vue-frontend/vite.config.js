@@ -6,11 +6,11 @@ export default defineConfig({
   plugins: [vue()],
   resolve: {
     alias: {
-      '@': resolve(__dirname, 'src')
+      '@': resolve(import.meta.dirname, 'src')
     }
   },
   server: {
-    host: 'localhost',
+    host: '0.0.0.0',
     port: 3000,
     strictPort: true,
     proxy: {
@@ -24,10 +24,21 @@ export default defineConfig({
         changeOrigin: true,
         secure: false
       },
-      '/login': {
+      '/auth': {
         target: 'http://localhost:8080',
         changeOrigin: true,
-        secure: false
+        secure: false,
+        rewrite: (path) => path.replace(/^\/auth/, ''),
+        configure(proxy) {
+          proxy.on('proxyRes', (proxyRes) => {
+            const location = proxyRes.headers.location
+            if (!location) return
+
+            proxyRes.headers.location = location
+              .replace(/^http:\/\/localhost:8080\//, '/auth/')
+              .replace(/^\/(?!auth\/)/, '/auth/')
+          })
+        }
       },
       '/logout': {
         target: 'http://localhost:8080',

@@ -1,70 +1,81 @@
-# SKALA GearHub 실습 문서 안내
+# GearHub Campus 실습 문서 안내
 
-## 문서 작성 전제
+기준일: 2026-08-27
 
-- 실습 기간은 2일이며, 하루를 하나의 스프린트로 운영한다.
-- Sprint 1은 `Member + Asset + Request`를 이용한 대여 워킹 스켈레톤을 완성한다.
-- Sprint 2는 `Budget + Kafka + Alternative`를 붙여 신규 구매요청까지 확장한다.
-- Auth Server, API Gateway, Eureka Server는 제공 인프라로 보고 내부 구현을 수정하지 않는다.
-- 기존 템플릿의 포트, API 경로, Kafka 토픽과 물리 테이블은 호환성을 위해 유지한다.
-- 발표 장표는 이 문서 세트에 포함하지 않는다.
-- 현재 코드를 기준으로 확인된 사실과 향후 제안을 구분하며, 수행하지 않은 회의나 사용자 검증을 수행한 것처럼 기록하지 않는다.
-- 제품은 교육기관·기업의 내부 장비 운영을 지원하는 B2B SaaS로 정의하되, 현재 구현은 조직 하나를 대상으로 한 단일 테넌트 MVP로 설명한다.
+## 1. 문서 기준
 
-## 문서 목록
+이 디렉터리의 모든 문서는 현재 구현된 GearHub Campus를 하나의 기준으로 설명한다. 문서 간 우선순위나 별도 제품안 없이 현재 코드와 검증 결과를 동일하게 반영한다.
 
-| 문서 | 용도 | 가이드 요구사항 |
-|---|---|---|
-| [01_TEMPLATE_SUBNOTE.md](./01_TEMPLATE_SUBNOTE.md) | 제공 템플릿 이해, 변경 범위와 시행착오 기록 | 가이드 1의 개인 서브노트 |
-| [02_PRODUCT_AND_DOMAIN.md](./02_PRODUCT_AND_DOMAIN.md) | 이해관계자, Pain Point, 솔루션, 도메인 매핑과 AI 역할 | 가이드 2의 기획 흐름 1~2 |
-| [03_PRODUCT_BACKLOG.md](./03_PRODUCT_BACKLOG.md) | 우선순위가 있는 사용자 스토리와 완료 조건 | 가이드 2의 Backlog·User Story·DoD |
-| [04_TWO_DAY_SPRINT_PLAN.md](./04_TWO_DAY_SPRINT_PLAN.md) | Day 1·2 계획, 역할, Review와 Retro | 가이드 1·2의 Sprint Planning/Review/Retro |
-| [05_ARCHITECTURE_AND_ERD.md](./05_ARCHITECTURE_AND_ERD.md) | 서비스 경계, REST·Kafka 흐름, 시퀀스와 ERD | 가이드 2의 아키텍처, 가이드 3 Step 1~5·7 |
-| [06_API_CONTRACT.md](./06_API_CONTRACT.md) | 프론트엔드와 서비스 간 API 계약 및 예시 | 가이드 2·3의 API 명세 |
-| [07_VALIDATION_AND_DEMO.md](./07_VALIDATION_AND_DEMO.md) | 인수 테스트 결과, 캡처 목록과 데모 순서 | 가이드 2의 동작 화면·통합 검증 |
-| [08_AGILE_EXECUTION_LOG.md](./08_AGILE_EXECUTION_LOG.md) | Sprint 0, 보드, 속도, 계획 대비 실적과 회고 액션 | 추가 Agile·MSA PDF의 Scrum 실행 증거 |
+현재 제품의 한 문장 정의는 다음과 같다.
 
-서비스 전체 요약과 실행 방법은 상위 문서 [SKALA_GEARHUB.md](../SKALA_GEARHUB.md)를 사용한다.
+> 한 대학교의 학과·연구실·동아리가 학교 공용 및 그룹 전용 장비를 대여·반납·도입하고, 관리자가 다음 4주 수요를 예측해 재고 이동과 도입을 판단하는 B2B 운영 플랫폼
 
-## 가이드 요구사항 대응표
+## 2. 현재 기준선
 
-| 출처 | 핵심 요구 | GearHub 대응 |
-|---|---|---|
-| 가이드 1 | Sprint 1은 2~3개 도메인 서비스 안에서 처음부터 끝까지 동작하는 한 흐름을 만든다. | 대여 가능한 교보재 조회 → 대여 신청 → 운영진 승인 → 재고 차감을 Sprint 1 목표로 정의 |
-| 가이드 1 | Sprint 2에서 Payment, Kafka, Recommend를 팀 도메인에 맞게 확장한다. | Payment를 Budget으로, Recommend를 Alternative로 해석하고 예산 결과를 Kafka로 Request에 반영 |
-| 가이드 1 | Sprint마다 짧은 데모와 회고를 수행한다. | 각 스프린트에 Review 시나리오와 Retro 항목을 배치 |
-| 가이드 1 | Auth Server와 API Gateway는 제공 이미지이며 수정 대상이 아니다. | 이미지 내부 코드는 변경하지 않고 새 서비스 목적지는 Compose 환경변수로 연결 |
-| 가이드 2 | 이해관계자 가치 → 솔루션 → 스프린트 → 아키텍처 → API → 화면 순서로 설명한다. | 문서 번호 자체를 같은 설명 순서로 구성 |
-| 가이드 2 | 팀 아이디어로 도메인 매핑표를 먼저 작성한다. | Course→Asset, Enrollment→Request, Payment→Budget 등 명시 |
-| 가이드 2 | 프론트는 Gateway를 호출하고 토큰을 포함한다. | Base URL `http://localhost:8080`, OAuth2 토큰과 Axios 인터셉터 사용 |
-| 가이드 3 | 요구사항, 도메인, 인프라, 통신, ERD, API, Docker 구성을 설계한다. | 아키텍처·ERD 문서와 API 계약 문서에 현재 구현 기준으로 재작성 |
-| 보강 1 | MSA가 항상 정답은 아니며, 실제 API 연결·서비스 독립성·외부 피드백을 증명한다. | 실습에서 MSA를 택한 이유와 한계를 기록하고 Mock이 아닌 API 검증·독립성 실험 항목 추가 |
-| 보강 2 | 이미지·컨테이너·Compose를 구분하고 멀티스테이지·네트워크·환경변수·최소 권한을 점검한다. | 현재 Dockerfile·Compose의 충족 항목과 보안·운영 보강점을 서브노트에 기록 |
-| 추가 PDF | Product/Sprint Backlog, Increment, DoD와 Planning·Daily·Review·Retro를 실제 운영 흔적으로 남긴다. | Sprint Board, 속도, Review 피드백란, Keep·Problem·Try 액션 추적 문서 추가 |
-| 추가 PDF | Epic → User Story → Task로 분해하고 INVEST·MoSCoW·Planning Poker를 활용한다. | 상위 백로그 정제표, Fibonacci SP, 작업 분해와 DoR·DoD로 반영 |
-| 추가 PDF | MSA는 Bounded Context, API 우선, 데이터 소유권, 동기·비동기 통신과 실패 설계가 필요하다. | 서비스 경계·API 계약·ACL·데이터 일관성·미구현 복원력 항목을 구분해 기록 |
+| 항목 | 현재 결정 |
+|---|---|
+| 고객 범위 | 한 대학교 |
+| 업무 범위 | 여러 학과·연구실·동아리의 자산 운영 |
+| 화면 분리 | 그룹별 동적 URL, 단일 프론트엔드 배포 |
+| 핵심 흐름 | 그룹 참여 → 자산 조회 → 대여 승인 → 반납 확인 → 재고 복구 |
+| 도입 흐름 | 구성원 요청 → 그룹 검토 → 학교 예산 검토 → 입고 |
+| AI | 그룹 × 카테고리의 다음 4주 수요예측 |
+| AI 활용 | 부족 수량, 다른 그룹 이동 가능 수량, 도입 검토 근거 제공 |
+| 데이터 | 운영 데모와 분석 시뮬레이션 이력 분리 |
+| 실행 | Docker Compose로 프론트엔드를 포함한 11개 컨테이너 실행 |
 
-## 문서 해석 원칙
+## 3. 문서 목록
 
-- PDF 안의 온라인 강의 플랫폼, 기업 사례, 인증·Eureka·Kafka 스프린트 구성과 시간표는 **설명용 예시**로 본다.
-- 실제 프로젝트 요구사항은 사용자가 정한 B2B 장비 관리 도메인, 2일·2스프린트, 기존 MSA 최소 수정 원칙을 우선한다.
-- 예시의 산출물 형식은 GearHub에 맞게 활용하지만, 예시 기능을 그대로 구현해야 하는 요구사항으로 해석하지 않는다.
-- 실제 회의 참석자, 팀 합의, 이해관계자 피드백과 화면 캡처는 확인되지 않은 값을 만들지 않고 `TEAM INPUT`으로 남긴다.
+| 번호 | 문서 | 역할 |
+|---:|---|---|
+| 00 | 현재 문서 | 전체 기준과 읽는 순서 |
+| 01 | [코드 템플릿 이해](./01_TEMPLATE_SUBNOTE.md) | 물리 서비스 이름과 GearHub 업무 의미의 매핑 |
+| 02 | [제품과 도메인](./02_PRODUCT_AND_DOMAIN.md) | 사용자, 문제, 핵심 흐름, MVP 범위 |
+| 03 | [Product Backlog](./03_PRODUCT_BACKLOG.md) | 우선순위, Story, 인수 조건, DoR·DoD |
+| 04 | [2일 Sprint 계획](./04_TWO_DAY_SPRINT_PLAN.md) | Sprint Goal, 작업 분해, Review 기준 |
+| 05 | [아키텍처와 ERD](./05_ARCHITECTURE_AND_ERD.md) | 서비스 경계, 통신, 상태, 데이터 소유권 |
+| 06 | [API 계약](./06_API_CONTRACT.md) | 현재 엔드포인트와 대표 요청·응답 |
+| 07 | [검증과 데모](./07_VALIDATION_AND_DEMO.md) | 인수 테스트, Smoke Test, 발표 흐름 |
+| 08 | [Agile 실행 기록](./08_AGILE_EXECUTION_LOG.md) | 의사결정, 보드, Review, 회고 |
+| 09 | [AI 설계](./09_CAMPUS_PIVOT_AND_AI.md) | 수요예측 문제, 데이터, 모델, 운영 연결 |
+| 10 | [최종 검증 기록](./10_FINAL_VALIDATION.md) | 실제 실행·테스트 수치와 재현 명령 |
+| 11 | [보고서·15분 발표 설계안](./11_REPORT_AND_15MIN_PRESENTATION.md) | PDF 요구를 반영한 보고서 목차, PPT 13장, 데모 Runbook |
 
-## 현재 상태 표기
+## 4. 권장 읽기 순서
 
-- `DONE`: 현재 소스와 통합 검증에서 확인됨
-- `READY`: 코드 또는 문서는 준비됐지만 새 이름으로 컨테이너 재기동 전
-- `TEAM INPUT`: 팀원 이름, 실제 회고 의견처럼 팀이 직접 채워야 함
-- `FUTURE`: 이틀 MVP 범위 밖의 아이디어
+1. 제품 평가자는 02 → 03 → 09 → 10 순서로 읽는다.
+2. 기술 평가자는 05 → 06 → 10 순서로 읽는다.
+3. Agile 수행 근거는 03 → 04 → 08 순서로 확인한다.
+4. 발표자는 11을 전체 뼈대로 사용하고, 02와 07에서 상세 근거를 보완한다.
 
-## 제출 전 최소 확인
+## 5. 사실 확인 우선순위
 
-- [ ] 팀원 이름과 실제 담당을 Sprint 문서에 입력
-- [ ] 새 서비스명으로 Docker를 재기동하고 Eureka 등록 화면 확인
-- [ ] 학생·운영진 계정으로 Gateway 경유 화면 흐름 재검증
-- [ ] 팀원 전원이 Swagger UI에서 담당 API를 최소 1회 실제 호출
-- [ ] `docs/evidence/screenshots`에 요청 전·후 화면 저장
-- [ ] Sprint Board의 최종 상태와 Done SP를 실제 팀 결과로 갱신
-- [ ] 실제 Review 피드백과 Retro 의견으로 예시 문구 교체
-- [ ] 발표 자료는 이 문서의 순서를 바탕으로 별도 제작
+문서와 실행 결과가 다를 경우 다음 순서로 판단한다.
+
+1. 현재 브랜치의 코드와 Docker Compose
+2. 10_FINAL_VALIDATION.md의 실제 검증 결과
+3. API·아키텍처 문서
+4. 계획·백로그 문서
+
+계획 문서의 Story Point와 회의 항목은 Agile 운영 자료이며, 코드 동작을 대신하는 근거가 아니다.
+
+## 6. 상태 표기
+
+| 표기 | 의미 |
+|---|---|
+| DONE | 코드와 검증 근거가 모두 있음 |
+| READY | 인수 조건이 정리되어 바로 착수 가능 |
+| FUTURE | 현재 MVP 범위 밖의 후속 작업 |
+| TEAM INPUT | 실제 팀 이름이나 회의 발언을 입력해야 하는 항목 |
+
+## 7. 제출 전 확인
+
+- 모든 문서가 GearHub Campus, 한 학교·멀티그룹 기준으로 설명되는가
+- 대여 흐름이 반납 확인과 재고 복구까지 닫혀 있는가
+- 도입 흐름이 그룹 승인, 예산 승인, 입고까지 이어지는가
+- AI가 개인 추천이 아니라 관리자 수요예측으로 설명되는가
+- 기준선과 모델 성능, 시간순 분리, 합성 데이터 한계가 함께 공개되는가
+- 화면 경로, API, 상태값, 포트가 현재 코드와 일치하는가
+- Docker 실행과 데모 계정을 재현할 수 있는가
+
+최종 수치와 명령은 [최종 검증 기록](./10_FINAL_VALIDATION.md)을 기준으로 사용한다.

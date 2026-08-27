@@ -129,6 +129,48 @@ public class CourseServiceClient {
         }
     }
 
+    public void returnCourse(Long courseId) {
+        try {
+            webClientBuilder.build()
+                    .post()
+                    .uri("http://asset-service/api/courses/internal/{id}/return", courseId)
+                    .retrieve()
+                    .toBodilessEntity()
+                    .block();
+            log.info("[CourseServiceClient] 자산 재고 복구 완료 - courseId: {}", courseId);
+        } catch (Exception e) {
+            log.error("[CourseServiceClient] 자산 재고 복구 실패 - courseId: {}, error: {}",
+                    courseId, e.getMessage(), e);
+            throw new IllegalStateException("자산 반납 재고를 복구하지 못했습니다");
+        }
+    }
+
+    public Map<String, Object> receiveCourse(
+            Long courseId,
+            EnrollmentDto.ReceiveRequest request) {
+        Map<String, Object> body = new HashMap<>();
+        body.put("receivedQuantity", request.getReceivedQuantity());
+        body.put("pickupLocation", request.getPickupLocation());
+        body.put("visibility", request.getVisibility());
+        try {
+            Map<String, Object> response = webClientBuilder.build()
+                    .post()
+                    .uri("http://asset-service/api/courses/internal/{id}/receive", courseId)
+                    .bodyValue(body)
+                    .retrieve()
+                    .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
+                    .block();
+            if (response == null) {
+                throw new IllegalStateException("입고 처리 응답이 비어 있습니다");
+            }
+            return response;
+        } catch (Exception e) {
+            log.error("[CourseServiceClient] 입고 처리 실패 - courseId: {}, error: {}",
+                    courseId, e.getMessage(), e);
+            throw new IllegalStateException("도입 장비를 자산으로 전환하지 못했습니다");
+        }
+    }
+
     /**
      * 신규 구매요청 상품을 비공개 Course로 생성한다.
      * 기존 POST /api/courses 엔드포인트를 그대로 재사용한다.
@@ -146,12 +188,13 @@ public class CourseServiceClient {
         body.put("itemType", "PURCHASE_REQUEST");
         body.put("totalQuantity", request.getQuantity());
         body.put("purchaseUrl", request.getPurchaseUrl());
+        body.put("ownerGroupId", request.getGroupId());
+        body.put("requestedBy", userId);
 
         try {
             Map<String, Object> responseBody = webClientBuilder.build()
                     .post()
-                    .uri("http://asset-service/api/courses")
-                    .header("X-User-Id", String.valueOf(userId))
+                    .uri("http://asset-service/api/courses/internal/acquisition-requests")
                     .bodyValue(body)
                     .retrieve()
                     .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})

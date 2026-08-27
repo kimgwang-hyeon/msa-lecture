@@ -9,8 +9,8 @@ export const courseApi = {
     return api.get('/api/courses', { params })
   },
 
-  getById(id) {
-    return api.get(`/api/courses/${id}`)
+  getById(id, params) {
+    return api.get(`/api/courses/${id}`, { params })
   },
 
   create(data) {

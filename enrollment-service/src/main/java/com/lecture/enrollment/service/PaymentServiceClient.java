@@ -19,9 +19,14 @@ public class PaymentServiceClient {
     /**
      * Payment Service: 결제 요청 (동기 REST)
      */
-    public PaymentResult requestPayment(Long userId, Long courseId, BigDecimal amount) {
+    public PaymentResult requestPayment(
+            Long userId,
+            Long courseId,
+            Long requestId,
+            Long groupId,
+            BigDecimal amount) {
         try {
-            PaymentRequest request = new PaymentRequest(userId, courseId, amount);
+            PaymentRequest request = new PaymentRequest(userId, courseId, requestId, groupId, amount);
 
             PaymentResult result = webClientBuilder.build()
                     .post()
@@ -47,11 +52,20 @@ public class PaymentServiceClient {
     static class PaymentRequest {
         private Long userId;
         private Long courseId;
+        private Long requestId;
+        private Long groupId;
         private BigDecimal amount;
 
-        PaymentRequest(Long userId, Long courseId, BigDecimal amount) {
+        PaymentRequest(
+                Long userId,
+                Long courseId,
+                Long requestId,
+                Long groupId,
+                BigDecimal amount) {
             this.userId = userId;
             this.courseId = courseId;
+            this.requestId = requestId;
+            this.groupId = groupId;
             this.amount = amount;
         }
     }

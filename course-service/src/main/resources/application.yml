@@ -38,7 +38,7 @@ eureka:
 # 서비스 간 통신 설정
 service:
   member-service:
-    url: http://member-service
+    url: http://member-service:8081
 
 springdoc:
   api-docs:
