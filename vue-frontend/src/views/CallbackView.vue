@@ -1,6 +1,7 @@
 <template>
   <div class="callback-page">
-    <div class="callback-box">
+    <div class="callback-brand"><GearHubLogo /></div>
+    <div class="callback-box surface" role="status" aria-live="polite">
       <div class="spinner"></div>
       <p>{{ message }}</p>
     </div>
@@ -10,6 +11,7 @@
 <script setup>
 import { onMounted, ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+import GearHubLogo from '@/components/GearHubLogo.vue'
 import { useAuthStore } from '@/store/auth.js'
 
 const router = useRouter()
@@ -47,7 +49,7 @@ onMounted(async () => {
   try {
     await auth.handleCallback(code)
     message.value = '로그인 완료! 이동 중입니다...'
-    router.replace('/courses')
+    router.replace(auth.consumePostLoginRedirect())
   } catch (err) {
     console.error('OAuth callback 처리 실패:', err)
     message.value = '로그인 처리에 실패했습니다.'
@@ -62,10 +64,16 @@ onMounted(async () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--color-bg-secondary);
+  flex-direction: column;
+  gap: 18px;
+  padding: 24px;
+  background: linear-gradient(135deg, #edf5ff, #f8fbff);
 }
 
 .callback-box {
+  width: min(100%, 420px);
+  min-height: 180px;
+  padding: 32px;
   text-align: center;
   display: flex;
   flex-direction: column;

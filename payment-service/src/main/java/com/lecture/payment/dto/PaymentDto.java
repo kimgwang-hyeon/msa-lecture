@@ -37,6 +37,12 @@ public class PaymentDto {
         @NotNull(message = "교보재 ID는 필수입니다")
         private Long courseId;
 
+        @NotNull(message = "도입 요청 ID는 필수입니다")
+        private Long requestId;
+
+        @NotNull(message = "그룹 ID는 필수입니다")
+        private Long groupId;
+
         @NotNull(message = "금액은 필수입니다")
         @Positive(message = "금액은 양수여야 합니다")
         private BigDecimal amount;
@@ -51,6 +57,8 @@ public class PaymentDto {
         private Long paymentId;
         private Long userId;
         private Long courseId;
+        private Long requestId;
+        private Long groupId;
         private BigDecimal amount;
         private Payment.Status status;
         private String transactionId;
@@ -61,6 +69,8 @@ public class PaymentDto {
                     .paymentId(payment.getId())
                     .userId(payment.getUserId())
                     .courseId(payment.getCourseId())
+                    .requestId(payment.getRequestId())
+                    .groupId(payment.getGroupId())
                     .amount(payment.getAmount())
                     .status(payment.getStatus())
                     .transactionId(payment.getTransactionId())

@@ -8,6 +8,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -22,15 +24,21 @@ public class EnrollmentWriteService {
     public Enrollment createPendingEnrollment(
             Long userId,
             Long courseId,
+            Long groupId,
             Enrollment.RequestType requestType,
-            String reason) {
+            String reason,
+            LocalDate requestedFrom,
+            LocalDate dueDate) {
 
         Enrollment enrollment = enrollmentRepository.save(
                 Enrollment.builder()
                         .userId(userId)
                         .courseId(courseId)
+                        .groupId(groupId)
                         .requestType(requestType)
                         .reason(reason)
+                        .requestedFrom(requestedFrom)
+                        .dueDate(dueDate)
                         .build()
         );
 

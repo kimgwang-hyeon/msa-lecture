@@ -3,173 +3,522 @@
     <AppHeader />
     <main class="page-main">
       <div class="container">
-        <router-link to="/courses" class="back-link">← 교보재 목록</router-link>
+        <router-link :to="path('/assets')" class="back-link">← 자산 목록</router-link>
 
-        <div v-if="loading" class="loading-state surface"><div class="spinner"></div></div>
+        <div v-if="loading" class="loading-state surface">
+          <div class="spinner"></div>
+          <span>자산 정보와 내 요청을 확인하고 있습니다.</span>
+        </div>
+
         <div v-else-if="course" class="detail-grid fade-in-up">
           <section class="detail-main">
-            <div class="gear-visual" :class="`visual-${(course.categoryCode || 'etc').toLowerCase().replace('_', '-')}`">
-              <span>{{ categoryIcon(course.categoryCode || course.category) }}</span>
+            <div class="gear-visual" :class="`tone-${(course.categoryCode || 'etc').toLowerCase()}`">
+              <span aria-hidden="true"><AppIcon :name="categoryIcon(course.categoryCode || course.category)" :size="82" :stroke-width="1.25" /></span>
               <div class="asset-number">ASSET #{{ String(course.id).padStart(4, '0') }}</div>
+              <div class="visual-scope">{{ scopeLabel }}</div>
             </div>
+
             <div class="detail-copy surface">
-              <span class="badge">{{ course.category }}</span>
-              <h1>{{ course.title }}</h1>
-              <p>{{ course.description || '조직의 프로젝트와 교육에 사용할 수 있는 보유 장비입니다.' }}</p>
-              <div class="spec-grid">
-                <div><small>자산가치</small><strong>{{ money(course.price) }}</strong></div>
-                <div><small>전체 수량</small><strong>{{ course.totalQuantity }}개</strong></div>
-                <div><small>가용 수량</small><strong :class="{ danger: available === 0 }">{{ available }}개</strong></div>
-                <div><small>누적 이용</small><strong>{{ course.enrollmentCount }}회</strong></div>
+              <div class="tag-row">
+                <span class="badge">{{ course.category }}</span>
+                <span :class="['scope', course.visibility === 'ORGANIZATION' ? 'organization' : 'group']">
+                  {{ scopeLabel }}
+                </span>
               </div>
+              <h1>{{ course.title }}</h1>
+              <p>{{ course.description || '수업, 연구와 그룹 활동에 사용할 수 있는 자산입니다.' }}</p>
+
+              <dl class="spec-grid">
+                <div><dt>전체 수량</dt><dd>{{ course.totalQuantity }}개</dd></div>
+                <div><dt>가용 수량</dt><dd :class="{ danger: available === 0 }">{{ available }}개</dd></div>
+                <div><dt>수령, 반납 장소</dt><dd>{{ course.pickupLocation || '그룹 운영실' }}</dd></div>
+                <div><dt>최대 대여</dt><dd>{{ course.maxLoanDays || 7 }}일</dd></div>
+              </dl>
             </div>
+
+            <section class="loan-guide surface">
+              <div>
+                <span>1</span>
+                <strong>기간과 목적 입력</strong>
+                <p>필요한 일정과 구체적인 활용 목적을 적습니다.</p>
+              </div>
+              <i aria-hidden="true">→</i>
+              <div>
+                <span>2</span>
+                <strong>그룹 관리자 승인</strong>
+                <p>승인 시 재고 1개가 배정됩니다.</p>
+              </div>
+              <i aria-hidden="true">→</i>
+              <div>
+                <span>3</span>
+                <strong>반납 확인</strong>
+                <p>장비 전달 후 확인되면 재고가 복원됩니다.</p>
+              </div>
+            </section>
           </section>
 
           <aside class="request-panel surface">
-            <div class="panel-label">LOAN REQUEST</div>
-            <h2>{{ isOperator ? '교보재 운영 정보' : '대여 신청' }}</h2>
+            <div class="panel-heading">
+              <div>
+                <span class="panel-label">LOAN REQUEST</span>
+                <h2>대여 신청</h2>
+              </div>
+              <span :class="['stock-state', { out: available === 0 }]">
+                {{ available > 0 ? `${available}개 가능` : '재고 없음' }}
+              </span>
+            </div>
 
-            <template v-if="isOperator">
-              <p>운영진 계정에서는 교보재를 신청하지 않습니다. 승인 관리에서 교육생 신청을 확인할 수 있습니다.</p>
-              <router-link to="/admin/approvals" class="btn btn-primary btn-block">승인 관리로 이동</router-link>
-            </template>
+            <div v-if="openRequest" class="existing-request">
+              <div class="existing-heading">
+                <StatusBadge :status="openRequest.status" />
+                <span>REQ-{{ String(openRequest.id).padStart(4, '0') }}</span>
+              </div>
+              <h3>이미 진행 중인 요청이 있습니다.</h3>
+              <p>
+                <strong>{{ requestGroupName }}</strong>에서 같은 자산을 처리 중입니다.
+                중복 대여를 막기 위해 새 신청은 잠시 제한됩니다.
+              </p>
+              <RequestProgress :type="openRequest.requestType" :status="openRequest.status" />
+              <router-link :to="`/groups/${openRequest.groupId}/loans`" class="btn btn-outline btn-block">
+                진행 중인 요청 보기
+              </router-link>
+            </div>
 
             <template v-else>
-              <div class="stock-line"><span>현재 상태</span><strong :class="{ out: available === 0 }">{{ available > 0 ? '대여 가능' : '재고 없음' }}</strong></div>
-
-              <div v-if="enrollmentStatus !== 'NONE'" :class="['request-status', statusClass]">
-                <strong>{{ statusLabel }}</strong>
-                <span>{{ statusDescription }}</span>
+              <div class="date-grid">
+                <label class="field">
+                  <span>대여 시작일</span>
+                  <input v-model="form.requestedFrom" type="date" :min="today" class="form-input" />
+                </label>
+                <label class="field">
+                  <span>반납 예정일</span>
+                  <input
+                    v-model="form.dueDate"
+                    type="date"
+                    :min="form.requestedFrom"
+                    :max="maxDueDate"
+                    class="form-input"
+                  />
+                </label>
               </div>
 
-              <label v-if="enrollmentStatus === 'NONE'" class="field">
-                <span>사용 목적</span>
-                <textarea v-model.trim="reason" class="form-textarea" placeholder="예: 모바일 앱 테스트 및 팀 프로젝트 시연" maxlength="500"></textarea>
-              </label>
+              <div class="duration-summary">
+                <span>선택 기간</span>
+                <strong>{{ durationDays }}일</strong>
+                <small>최대 {{ course.maxLoanDays || 7 }}일</small>
+              </div>
 
-              <div v-if="error" class="error-box">{{ error }}</div>
-              <button
-                class="btn btn-primary btn-block"
-                :disabled="submitting || available === 0 || enrollmentStatus !== 'NONE'"
-                @click="submitLoan"
-              >
-                {{ submitting ? '신청 중...' : buttonLabel }}
-              </button>
-              <p class="helper">운영진 승인 후 대여가 확정되며 실제 결제는 발생하지 않습니다.</p>
+              <label class="field reason-field">
+                <span>사용 목적</span>
+                <textarea
+                  v-model.trim="form.reason"
+                  class="form-textarea"
+                  placeholder="수업명, 연구, 행사 목적과 사용 장소를 구체적으로 적어 주세요."
+                  maxlength="500"
+                ></textarea>
+                <small class="character-count">{{ form.reason.length }}/500</small>
+              </label>
             </template>
+
+            <div v-if="message" class="success-box" role="status">{{ message }}</div>
+            <div v-if="error" class="error-box" role="alert">{{ error }}</div>
+
+            <button
+              v-if="!openRequest"
+              class="btn btn-primary btn-block"
+              :disabled="submitting || available === 0"
+              @click="submitLoan"
+            >
+              {{ submitting ? '신청 중...' : '대여 신청하기' }}
+            </button>
+            <p class="helper">승인 전에는 재고가 차감되지 않으며, 반납도 관리자 확인 후 완료됩니다.</p>
           </aside>
         </div>
 
-        <div v-else class="empty-state surface"><span class="empty-icon">!</span><strong>교보재 정보를 찾을 수 없습니다.</strong></div>
+        <div v-else class="empty-state surface">
+          <strong>자산 정보를 찾을 수 없습니다.</strong>
+          <router-link :to="path('/assets')" class="btn btn-outline">자산 목록</router-link>
+        </div>
       </div>
     </main>
   </div>
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import AppHeader from '@/components/AppHeader.vue'
+import AppIcon from '@/components/AppIcon.vue'
+import RequestProgress from '@/components/RequestProgress.vue'
+import StatusBadge from '@/components/StatusBadge.vue'
 import { enrollmentApi } from '@/api/enrollment.js'
-import { useAuthStore } from '@/store/auth.js'
 import { categoryIcon, useCourseStore } from '@/store/course.js'
+import { useGroupStore } from '@/store/group.js'
+import { isOpenRequest } from '@/utils/requestStatus.js'
 
 const route = useRoute()
-const auth = useAuthStore()
 const courseStore = useCourseStore()
-const reason = ref('')
+const groupStore = useGroupStore()
 const error = ref('')
+const message = ref('')
 const submitting = ref(false)
-const enrollmentStatus = ref('NONE')
+const requests = ref([])
 
+const groupId = computed(() => Number(route.params.groupId))
 const course = computed(() => courseStore.selectedCourse)
 const loading = computed(() => courseStore.loading)
-const isOperator = computed(() => auth.user?.role === 'INSTRUCTOR')
-const available = computed(() => Number(course.value?.availableQuantity || 0))
-const buttonLabel = computed(() => available.value > 0 ? '대여 신청하기' : '현재 대여 불가')
-const statusLabel = computed(() => ({ PENDING: '승인 대기', ACTIVE: '대여 승인', REJECTED: '신청 반려' }[enrollmentStatus.value] || ''))
-const statusDescription = computed(() => ({
-  PENDING: '운영진이 신청 내용을 확인하고 있습니다.',
-  ACTIVE: '운영진이 대여 신청을 승인했습니다.',
-  REJECTED: '내 신청 화면에서 반려 사유를 확인해 주세요.'
-}[enrollmentStatus.value] || ''))
-const statusClass = computed(() => ({ PENDING: 'pending', ACTIVE: 'active', REJECTED: 'rejected' }[enrollmentStatus.value]))
+const available = computed(() => Number(course.value?.availableQuantity ?? 0))
+const scopeLabel = computed(() => course.value?.visibility === 'ORGANIZATION' ? '학교 공용' : '그룹 전용')
 
-function money(value) { return `${Number(value || 0).toLocaleString()}원` }
+const asIso = date => {
+  const local = new Date(date.getTime() - date.getTimezoneOffset() * 60000)
+  return local.toISOString().slice(0, 10)
+}
+const today = asIso(new Date())
+const form = reactive({ requestedFrom: today, dueDate: today, reason: '' })
 
-async function loadStatus() {
-  if (isOperator.value || !course.value?.id) return
-  try {
-    const res = await enrollmentApi.getMyEnrollments()
-    const items = Array.isArray(res.data?.data) ? res.data.data : []
-    const match = items.find(item => Number(item.courseId) === Number(course.value.id))
-    enrollmentStatus.value = match?.status || 'NONE'
-  } catch {
-    enrollmentStatus.value = 'NONE'
-  }
+const openRequest = computed(() => requests.value.find(item => (
+  Number(item.courseId) === Number(course.value?.id) && isOpenRequest(item.status)
+)))
+const requestGroupName = computed(() => (
+  groupStore.groups.find(group => Number(group.id) === Number(openRequest.value?.groupId))?.name
+  || `그룹 #${openRequest.value?.groupId}`
+))
+const maxDueDate = computed(() => {
+  if (!form.requestedFrom) return today
+  const start = new Date(`${form.requestedFrom}T00:00:00`)
+  start.setDate(start.getDate() + Math.max(1, Number(course.value?.maxLoanDays || 7)) - 1)
+  return asIso(start)
+})
+const durationDays = computed(() => {
+  const start = new Date(`${form.requestedFrom}T00:00:00`)
+  const due = new Date(`${form.dueDate}T00:00:00`)
+  if (Number.isNaN(start.getTime()) || Number.isNaN(due.getTime())) return 0
+  return Math.max(0, Math.floor((due - start) / 86400000) + 1)
+})
+
+const path = suffix => `/groups/${groupId.value}${suffix}`
+
+function explain(cause) {
+  return cause.response?.data?.message
+    || cause.response?.data?.detail
+    || cause.response?.data?.error
+    || '대여 신청을 처리하지 못했습니다.'
+}
+
+function validate() {
+  if (!form.requestedFrom || !form.dueDate) return '대여 시작일과 반납 예정일을 선택해 주세요.'
+  if (form.requestedFrom < today) return '대여 시작일은 오늘 이후여야 합니다.'
+  if (form.dueDate < form.requestedFrom) return '반납 예정일은 대여 시작일 이후여야 합니다.'
+  if (form.dueDate > maxDueDate.value) return `최대 ${course.value.maxLoanDays || 7}일까지 대여할 수 있습니다.`
+  if (!form.reason || form.reason.length < 5) return '사용 목적을 5자 이상 구체적으로 입력해 주세요.'
+  return ''
 }
 
 async function submitLoan() {
-  error.value = ''
-  if (!reason.value) {
-    error.value = '교보재 사용 목적을 입력해 주세요.'
-    return
-  }
+  error.value = validate()
+  message.value = ''
+  if (error.value) return
+
   submitting.value = true
   try {
-    await enrollmentApi.enroll(course.value.id, reason.value)
-    enrollmentStatus.value = 'PENDING'
-  } catch (e) {
-    error.value = e.response?.data?.message || '대여 신청에 실패했습니다.'
+    const response = await enrollmentApi.enroll({
+      courseId: course.value.id,
+      groupId: groupId.value,
+      ...form
+    })
+    requests.value.unshift(response.data?.data)
+    form.reason = ''
+    message.value = '대여 신청을 보냈습니다. 관리자 승인 전까지 재고는 유지됩니다.'
+  } catch (cause) {
+    error.value = explain(cause)
   } finally {
     submitting.value = false
   }
 }
 
-onMounted(async () => {
-  await courseStore.fetchCourse(route.params.id)
-  await loadStatus()
-})
+async function load() {
+  error.value = ''
+  message.value = ''
+  await Promise.all([
+    courseStore.fetchCourse(route.params.id),
+    groupStore.fetchGroups().catch(() => [])
+  ])
+
+  const days = Math.min(7, Number(course.value?.maxLoanDays || 7))
+  const due = new Date()
+  due.setDate(due.getDate() + days - 1)
+  form.requestedFrom = today
+  form.dueDate = asIso(due)
+
+  try {
+    const response = await enrollmentApi.getMyEnrollments()
+    requests.value = response.data?.data ?? []
+  } catch {
+    requests.value = []
+  }
+}
+
+watch(() => route.params.id, load)
+onMounted(load)
 </script>
 
 <style scoped>
-.back-link { display: inline-block; margin-bottom: 20px; color: var(--color-text-secondary); font-size: 12px; font-weight: 600; }
-.back-link:hover { color: var(--color-primary); }
-.detail-grid { display: grid; grid-template-columns: 1fr 350px; gap: 22px; align-items: start; }
-.detail-main { display: flex; flex-direction: column; gap: 17px; }
-.gear-visual { position: relative; height: 270px; display: grid; place-items: center; color: rgba(16,42,67,.72); background: #e8f5f1; border-radius: var(--radius-xl); overflow: hidden; }
-.gear-visual::before, .gear-visual::after { content: ''; position: absolute; border: 1px solid rgba(16,42,67,.08); border-radius: 50%; }
+.back-link {
+  display: inline-flex;
+  margin-bottom: 20px;
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  font-weight: 650;
+}
+.detail-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 390px;
+  gap: 22px;
+  align-items: start;
+}
+.detail-main {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.gear-visual {
+  position: relative;
+  min-height: 260px;
+  display: grid;
+  place-items: center;
+  color: rgba(29, 78, 216, .78);
+  background: linear-gradient(145deg, #eaf2ff, #f4f7fd);
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+}
+.gear-visual::before,
+.gear-visual::after {
+  content: '';
+  position: absolute;
+  border: 1px solid rgba(16, 42, 67, .08);
+  border-radius: 50%;
+}
 .gear-visual::before { width: 310px; height: 310px; }
 .gear-visual::after { width: 190px; height: 190px; }
-.gear-visual > span { z-index: 1; font-size: 94px; font-weight: 300; }
-.asset-number { position: absolute; left: 20px; bottom: 17px; font-size: 9px; font-weight: 800; letter-spacing: .15em; }
+.gear-visual > span {
+  z-index: 1;
+}
+.asset-number,
+.visual-scope {
+  position: absolute;
+  bottom: 17px;
+  z-index: 1;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .12em;
+}
+.asset-number { left: 20px; }
+.visual-scope {
+  right: 20px;
+  padding: 5px 8px;
+  background: rgba(255, 255, 255, .75);
+  border-radius: 999px;
+  letter-spacing: 0;
+}
 .detail-copy { padding: 28px; }
-.detail-copy h1 { margin-top: 12px; color: var(--color-navy); font-size: 29px; letter-spacing: -.04em; }
-.detail-copy > p { margin-top: 12px; color: var(--color-text-secondary); font-size: 14px; line-height: 1.8; }
-.spec-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 25px; padding-top: 20px; border-top: 1px solid var(--color-border); }
-.spec-grid div { display: flex; flex-direction: column; }
-.spec-grid small { color: var(--color-text-muted); font-size: 10px; }
-.spec-grid strong { margin-top: 3px; font-size: 13px; }
-.spec-grid .danger { color: var(--color-danger); }
-.request-panel { position: sticky; top: 90px; padding: 25px; }
-.panel-label { color: var(--color-primary); font-size: 9px; font-weight: 800; letter-spacing: .15em; }
-.request-panel h2 { margin-top: 6px; color: var(--color-navy); font-size: 21px; }
-.request-panel > p { margin: 14px 0 20px; color: var(--color-text-secondary); font-size: 12px; line-height: 1.7; }
-.stock-line { display: flex; align-items: center; justify-content: space-between; margin: 20px 0; padding: 12px 0; border-top: 1px solid var(--color-border); border-bottom: 1px solid var(--color-border); font-size: 12px; }
-.stock-line strong { color: var(--color-success); }
-.stock-line .out { color: var(--color-danger); }
-.request-panel .field { margin-bottom: 14px; }
-.request-panel .field > span { font-size: 12px; font-weight: 700; }
-.request-status { display: flex; flex-direction: column; gap: 3px; margin-bottom: 15px; padding: 13px; border-radius: 11px; }
-.request-status strong { font-size: 13px; }
-.request-status span { font-size: 10px; }
-.request-status.pending { color: var(--color-warning); background: var(--color-warning-light); }
-.request-status.active { color: var(--color-success); background: var(--color-success-light); }
-.request-status.rejected { color: var(--color-danger); background: var(--color-danger-light); }
-.helper { margin-top: 12px; color: var(--color-text-muted); font-size: 10px; text-align: center; }
-@media (max-width: 850px) {
+.tag-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.scope {
+  font-size: 10px;
+  font-weight: 750;
+}
+.scope.organization { color: var(--color-info); }
+.scope.group { color: var(--color-ai); }
+.detail-copy h1 {
+  margin-top: 13px;
+  color: var(--color-navy);
+  font-size: clamp(26px, 3vw, 32px);
+  letter-spacing: -.04em;
+}
+.detail-copy > p {
+  margin-top: 10px;
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  line-height: 1.8;
+}
+.spec-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 25px;
+  padding-top: 20px;
+  border-top: 1px solid var(--color-border);
+}
+.spec-grid div { min-width: 0; }
+.spec-grid dt {
+  color: var(--color-text-muted);
+  font-size: 10px;
+}
+.spec-grid dd {
+  margin: 4px 0 0;
+  font-size: 13px;
+  font-weight: 750;
+  word-break: keep-all;
+}
+.danger { color: var(--color-danger); }
+.loan-guide {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr auto 1fr;
+  align-items: center;
+  gap: 13px;
+  padding: 21px;
+}
+.loan-guide div {
+  display: grid;
+  grid-template-columns: 28px 1fr;
+  column-gap: 9px;
+}
+.loan-guide div > span {
+  grid-row: 1 / 3;
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  background: var(--color-primary);
+  border-radius: 50%;
+  font-size: 10px;
+  font-weight: 800;
+}
+.loan-guide strong { font-size: 11px; }
+.loan-guide p {
+  margin-top: 2px;
+  color: var(--color-text-muted);
+  font-size: 9px;
+  line-height: 1.5;
+}
+.loan-guide i { color: #8399b9; }
+.request-panel {
+  position: sticky;
+  top: 90px;
+  padding: 25px;
+}
+.panel-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+.panel-label {
+  color: var(--color-primary);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: .15em;
+}
+.request-panel h2 {
+  margin-top: 5px;
+  color: var(--color-navy);
+  font-size: 22px;
+}
+.stock-state {
+  padding: 6px 9px;
+  color: var(--color-success);
+  background: var(--color-success-light);
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 800;
+}
+.stock-state.out {
+  color: var(--color-danger);
+  background: var(--color-danger-light);
+}
+.date-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 9px;
+  margin-top: 20px;
+}
+.date-grid .form-input {
+  padding-inline: 8px;
+  font-size: 11px;
+}
+.duration-summary {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  margin-top: 10px;
+  padding: 9px 11px;
+  color: var(--color-text-secondary);
+  background: var(--color-bg-secondary);
+  border-radius: 9px;
+  font-size: 10px;
+}
+.duration-summary strong {
+  color: var(--color-primary);
+  font-size: 14px;
+}
+.duration-summary small { margin-left: auto; }
+.reason-field {
+  position: relative;
+  margin: 14px 0;
+}
+.reason-field textarea {
+  min-height: 120px;
+  padding-bottom: 28px;
+}
+.character-count {
+  position: absolute;
+  right: 10px;
+  bottom: 7px;
+  color: var(--color-text-muted);
+  font-size: 9px;
+}
+.existing-request {
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+  margin-top: 20px;
+  padding: 16px;
+  background: var(--color-bg-secondary);
+  border-radius: 13px;
+}
+.existing-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.existing-heading > span {
+  color: var(--color-text-muted);
+  font-size: 9px;
+  font-weight: 750;
+}
+.existing-request h3 {
+  color: var(--color-navy);
+  font-size: 14px;
+}
+.existing-request p {
+  color: var(--color-text-secondary);
+  font-size: 11px;
+  line-height: 1.65;
+}
+.helper {
+  margin-top: 12px;
+  color: var(--color-text-muted);
+  font-size: 10px;
+  line-height: 1.55;
+  text-align: center;
+}
+.success-box,
+.error-box { margin: 12px 0; }
+
+@media (max-width: 900px) {
   .detail-grid { grid-template-columns: 1fr; }
   .request-panel { position: static; }
 }
-@media (max-width: 560px) { .spec-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 620px) {
+  .spec-grid { grid-template-columns: repeat(2, 1fr); }
+  .date-grid { grid-template-columns: 1fr; }
+  .loan-guide { grid-template-columns: 1fr; }
+  .loan-guide i { display: none; }
+}
 </style>

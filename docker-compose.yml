@@ -264,6 +264,12 @@ services:
       - COURSE_SERVICE_URL=http://asset-service:8082
       - KAFKA_CONSUMER_GROUP_ID=alternative-service
       - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - KAFKA_TOPIC_RENTAL_LIFECYCLE=rental.lifecycle
+      - DB_HOST=lecturedb
+      - DB_PORT=3306
+      - DB_USER=manager
+      - DB_PASSWORD=SqlDba-1
+      - DB_NAME=lecture_db
     depends_on:
       eureka-server:
         condition: service_healthy
@@ -271,9 +277,26 @@ services:
         condition: service_healthy
       kafka:
         condition: service_healthy
+      mariadb:
+        condition: service_healthy
       request-service:
         condition: service_started
       asset-service:
+        condition: service_started
+    networks:
+      - lecture-net
+
+  # Web frontend
+
+  frontend:
+    build:
+      context: ./vue-frontend
+      dockerfile: Dockerfile
+    container_name: gearhub-frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      api-gateway:
         condition: service_started
     networks:
       - lecture-net

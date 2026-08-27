@@ -1,53 +1,81 @@
-# 조원 공유용 안내
+# GearHub Campus 팀 공유 안내
 
-## Git에 올릴 항목
+## 저장소에 포함할 것
 
-- 업무 서비스 소스: `user-service`, `course-service`, `enrollment-service`, `payment-service`, `recommend-service`
-- 인프라 소스: `eureka-server`
-- 프론트엔드: `vue-frontend`의 소스와 `package.json`, `package-lock.json`
-- 데이터 초기화: `init-db`
-- 실행 설정: `docker-compose.yml`
-- 프로젝트 설명과 Agile 문서: `readme.md`, `docs`
+- 업무 서비스: `user-service`, `course-service`, `enrollment-service`, `payment-service`, `recommend-service`
+- 인프라 소스와 설정: `eureka-server`, `init-db`, `docker-compose.yml`
+- 프론트엔드 소스: `vue-frontend`
+- 실행·설계·검증 문서: `readme.md`, `docs`
 
-## Git에서 제외하는 항목
+## 저장소에서 제외할 것
 
-- 각 서비스의 `build/`: Gradle 빌드 결과물
-- `vue-frontend/node_modules/`: npm 의존성
-- `vue-frontend/dist/`: 프론트 빌드 결과물
-- `infra-images.tar`: 제공받은 대용량 Docker 이미지 묶음
-- `*.zip`, `.DS_Store`, 로컬 환경 파일
+- Gradle `build/`
+- `node_modules/`, `dist/`
+- 로컬 `.env`
+- `infra-images.tar`와 기타 대용량 압축 파일
+- 개인 토큰·비밀번호·인증서
 
-`.gitignore`로 제외된 파일은 소스 저장소에 포함하지 않는다. 현재 프로젝트의 `infra-images.tar`는 약 343MB이므로 Git 저장소가 아닌 Google Drive 등으로 별도 공유한다.
+`infra-images.tar`는 약 343MB의 제공 인프라 이미지 묶음이므로 Git이 아닌 팀 파일 공유 공간으로 전달한다.
 
-## 조원이 처음 실행할 때
+## 새 PC에서 실행
 
-1. Git 저장소를 내려받는다.
-2. 별도 공유받은 `infra-images.tar`를 프로젝트 루트에 둔다.
-3. 제공 이미지가 필요한 경우 다음 명령으로 이미지를 불러온다.
+1. 저장소와 `infra-images.tar`를 준비한다.
+2. Docker Desktop을 실행한다.
+3. 프로젝트 루트에서 다음을 실행한다.
 
-   ```bash
-   docker load -i infra-images.tar
-   ```
+```powershell
+docker load -i infra-images.tar
+docker compose up -d --build
+docker compose exec -T alternative-service python scripts/seed_demo_data.py
+docker compose ps
+```
 
-4. 프론트 의존성을 설치한다.
+Compose가 백엔드, 인프라, 프론트엔드를 모두 올린다. 브라우저에서 <http://localhost:3000>을 연다.
 
-   ```bash
-   cd vue-frontend
-   npm ci
-   cp .env.example .env
-   npm run dev
-   ```
+프론트 Docker 빌드는 실습 Auth Server에 맞는 `web-client / web-secret` 기본값을 갖고 있다. 다른 OAuth 클라이언트를 사용하는 Docker 이미지는 Compose build args로 값을 덮어쓴다. `vue-frontend/.env`는 아래 로컬 개발 서버에서만 사용하며 Docker 이미지에는 복사하지 않는다.
 
-   `.env`의 `VITE_CLIENT_ID`와 `VITE_CLIENT_SECRET`은 제공된 auth-server 이미지에 등록된 값을 팀 내부의 안전한 방법으로 전달받아 입력한다. 실제 `.env`는 Git에 올리지 않는다.
+로컬 개발 서버가 필요한 경우에만 다음을 실행한다.
 
-5. 프로젝트 루트에서 Docker 서비스를 실행한다.
+```powershell
+cd vue-frontend
+npm ci
+Copy-Item .env.example .env
+npm run dev
+```
 
-   ```bash
-   docker compose up --build
-   ```
+## 데모 상태 복구
+
+발표 전에 아래 명령을 다시 실행하면 데모용 자산·대여·도입 요청과 예측 결과가 고정 시드 상태로 돌아간다.
+
+```powershell
+docker compose exec -T alternative-service python scripts/seed_demo_data.py
+```
+
+이 명령은 GearHub 데모 표시가 붙은 운영 데이터와 `SIMULATION` 분석 이벤트를 교체한다. 실제 Kafka로 수집한 `LIVE` 분석 이벤트는 삭제하지 않는다.
+
+데모 계정:
+
+- 관리자: `campus.admin@demo.local / GearHub123!`
+- 구성원: `campus.member@demo.local / GearHub123!`
+
+시연 전용 계정이므로 공개·운영 환경에서는 제거하거나 비밀번호를 교체한다.
+
+## 최소 검증
+
+```powershell
+docker compose ps
+docker compose exec -T alternative-service python -m pytest -q
+
+cd vue-frontend
+npm ci
+npm run build
+```
+
+최종 전체 검증 결과와 Spring 테스트 환경변수는 [agile/10_FINAL_VALIDATION.md](./agile/10_FINAL_VALIDATION.md)에 기록되어 있다.
 
 ## 주의
 
-- `node_modules`를 Slack이나 메신저로 공유하지 않는다. macOS에서 `fsevents.node` 보안 경고가 발생할 수 있다.
-- `build/`, `dist/`, `node_modules/`는 각자 명령으로 다시 생성한다.
-- 공개 저장소에는 비밀번호·토큰을 올리지 않고, 저장소는 우선 비공개로 운영한다.
+- `docker compose down`은 볼륨을 유지하지만 `down -v`는 DB와 Kafka 데이터를 지운다.
+- `node_modules`, `build`, `dist`를 압축해 공유하지 말고 각 PC에서 다시 만든다.
+- 제공 Auth/Gateway 이미지는 팀이 함께 전달받아야 하며 GitHub에 올리지 않는다.
+- 실습용 DB 비밀번호와 OAuth 클라이언트 값은 운영용 비밀정보로 재사용하지 않는다.

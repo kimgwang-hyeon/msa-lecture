@@ -34,6 +34,7 @@ public class EnrollmentKafkaConsumer {
         try {
             Object userIdValue = event.get("userId");
             Object courseIdValue = event.get("courseId");
+            Object requestIdValue = event.get("requestId");
             Object statusValue = event.get("status");
 
             if (userIdValue == null || courseIdValue == null || statusValue == null) {
@@ -42,12 +43,15 @@ public class EnrollmentKafkaConsumer {
 
             Long userId = ((Number) userIdValue).longValue();
             Long courseId = ((Number) courseIdValue).longValue();
+            Long requestId = requestIdValue instanceof Number number
+                    ? number.longValue()
+                    : null;
             String status = statusValue.toString();
 
             log.info("[Kafka Consumer] payment.completed 파싱 완료 - userId: {}, courseId: {}",
                     userId, courseId);
 
-            enrollmentService.handleBudgetReview(userId, courseId, status);
+            enrollmentService.handleBudgetReview(requestId, userId, courseId, status);
 
             log.info("[Kafka Consumer] 예산 검토 결과 반영 완료 - userId: {}, courseId: {}, status: {}",
                     userId, courseId, status);

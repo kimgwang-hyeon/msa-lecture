@@ -33,21 +33,28 @@ public class PaymentController {
      */
     @GetMapping
     public ResponseEntity<PaymentDto.ApiResponse<List<PaymentDto.PaymentResponse>>> getPayments(
-            @RequestParam(required = false) Payment.Status status) {
+            @RequestParam(required = false) Payment.Status status,
+            @RequestParam(required = false) Long groupId,
+            @RequestHeader(value = "X-User-Role", required = false) String userRole) {
+        assertOrganizationAdmin(userRole);
         return ResponseEntity.ok(
-                PaymentDto.ApiResponse.success(paymentService.getPayments(status)));
+                PaymentDto.ApiResponse.success(paymentService.getPayments(status, groupId)));
     }
 
     @PostMapping("/{id}/approve")
     public ResponseEntity<PaymentDto.ApiResponse<PaymentDto.PaymentResponse>> approveBudget(
-            @PathVariable Long id) {
+            @PathVariable Long id,
+            @RequestHeader(value = "X-User-Role", required = false) String userRole) {
+        assertOrganizationAdmin(userRole);
         return ResponseEntity.ok(
                 PaymentDto.ApiResponse.success(paymentService.approveBudget(id)));
     }
 
     @PostMapping("/{id}/reject")
     public ResponseEntity<PaymentDto.ApiResponse<PaymentDto.PaymentResponse>> rejectBudget(
-            @PathVariable Long id) {
+            @PathVariable Long id,
+            @RequestHeader(value = "X-User-Role", required = false) String userRole) {
+        assertOrganizationAdmin(userRole);
         return ResponseEntity.ok(
                 PaymentDto.ApiResponse.success(paymentService.rejectBudget(id)));
     }
@@ -72,5 +79,11 @@ public class PaymentController {
 
         return ResponseEntity.ok(
                 PaymentDto.ApiResponse.success(paymentService.getPaymentsByUser(userId)));
+    }
+
+    private void assertOrganizationAdmin(String userRole) {
+        if (userRole != null && !"INSTRUCTOR".equals(userRole)) {
+            throw new IllegalStateException("학교 예산 관리자 권한이 필요합니다");
+        }
     }
 }

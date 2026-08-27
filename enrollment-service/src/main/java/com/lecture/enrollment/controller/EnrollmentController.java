@@ -18,90 +18,129 @@ public class EnrollmentController {
 
     private final EnrollmentService enrollmentService;
 
-    /**
-     * POST /enrollments - 수강신청
-     * Gateway에서 X-User-Id 헤더로 사용자 ID 전달
-     */
     @PostMapping
     public ResponseEntity<EnrollmentDto.ApiResponse<EnrollmentDto.EnrollmentResponse>> enroll(
             @Valid @RequestBody EnrollmentDto.EnrollRequest request,
             @RequestHeader("X-User-Id") Long userId) {
-
-        EnrollmentDto.EnrollmentResponse response =
-                enrollmentService.enroll(userId, request.getCourseId(), request.getReason());
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(EnrollmentDto.ApiResponse.success(response));
+                .body(EnrollmentDto.ApiResponse.success(
+                        enrollmentService.enroll(userId, request)
+                ));
     }
 
-    /**
-     * POST /enrollments/purchases - 신규 교보재 구매요청
-     */
-    @PostMapping("/purchases")
-    public ResponseEntity<EnrollmentDto.ApiResponse<EnrollmentDto.EnrollmentResponse>> requestPurchase(
+    @PostMapping({"/acquisitions", "/purchases"})
+    public ResponseEntity<EnrollmentDto.ApiResponse<EnrollmentDto.EnrollmentResponse>> requestAcquisition(
             @Valid @RequestBody EnrollmentDto.PurchaseRequest request,
             @RequestHeader("X-User-Id") Long userId) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(EnrollmentDto.ApiResponse.success(
-                        enrollmentService.requestPurchase(userId, request)));
+                        enrollmentService.requestAcquisition(userId, request)
+                ));
     }
 
-    /**
-     * GET /enrollments/pending?requestType=LOAN - 운영진 대기 신청 조회
-     */
+    @GetMapping("/group/{groupId}")
+    public ResponseEntity<EnrollmentDto.ApiResponse<List<EnrollmentDto.EnrollmentResponse>>> getGroupRequests(
+            @PathVariable Long groupId,
+            @RequestParam Enrollment.RequestType requestType,
+            @RequestParam Enrollment.Status status,
+            @RequestHeader("X-User-Id") Long requesterId) {
+        return ResponseEntity.ok(EnrollmentDto.ApiResponse.success(
+                enrollmentService.getGroupRequests(groupId, requestType, status, requesterId)
+        ));
+    }
+
     @GetMapping("/pending")
     public ResponseEntity<EnrollmentDto.ApiResponse<List<EnrollmentDto.EnrollmentResponse>>> getPending(
-            @RequestParam Enrollment.RequestType requestType) {
+            @RequestParam Enrollment.RequestType requestType,
+            @RequestParam Long groupId,
+            @RequestHeader("X-User-Id") Long requesterId) {
         return ResponseEntity.ok(EnrollmentDto.ApiResponse.success(
-                enrollmentService.getPendingEnrollments(requestType)));
+                enrollmentService.getGroupRequests(
+                        groupId,
+                        requestType,
+                        Enrollment.Status.PENDING,
+                        requesterId
+                )
+        ));
     }
 
     @PostMapping("/{id}/approve")
     public ResponseEntity<EnrollmentDto.ApiResponse<EnrollmentDto.EnrollmentResponse>> approveLoan(
-            @PathVariable Long id) {
+            @PathVariable Long id,
+            @RequestHeader("X-User-Id") Long reviewerId) {
         return ResponseEntity.ok(EnrollmentDto.ApiResponse.success(
-                enrollmentService.approveLoan(id)));
+                enrollmentService.approveLoan(id, reviewerId)
+        ));
+    }
+
+    @PostMapping("/{id}/group-approve")
+    public ResponseEntity<EnrollmentDto.ApiResponse<EnrollmentDto.EnrollmentResponse>> approveAcquisition(
+            @PathVariable Long id,
+            @RequestHeader("X-User-Id") Long reviewerId) {
+        return ResponseEntity.ok(EnrollmentDto.ApiResponse.success(
+                enrollmentService.approveAcquisition(id, reviewerId)
+        ));
     }
 
     @PostMapping("/{id}/reject")
-    public ResponseEntity<EnrollmentDto.ApiResponse<EnrollmentDto.EnrollmentResponse>> rejectLoan(
+    public ResponseEntity<EnrollmentDto.ApiResponse<EnrollmentDto.EnrollmentResponse>> rejectRequest(
             @PathVariable Long id,
+            @RequestHeader("X-User-Id") Long reviewerId,
             @RequestBody EnrollmentDto.ReviewRequest request) {
         return ResponseEntity.ok(EnrollmentDto.ApiResponse.success(
-                enrollmentService.rejectLoan(id, request.getReviewComment())));
+                enrollmentService.rejectRequest(id, reviewerId, request.getReviewComment())
+        ));
     }
 
-    /**
-     * GET /enrollments/my - 내 수강 목록 조회
-     * Gateway가 전달한 X-User-Id 헤더를 사용
-     */
+    @PostMapping("/{id}/return-request")
+    public ResponseEntity<EnrollmentDto.ApiResponse<EnrollmentDto.EnrollmentResponse>> requestReturn(
+            @PathVariable Long id,
+            @RequestHeader("X-User-Id") Long userId) {
+        return ResponseEntity.ok(EnrollmentDto.ApiResponse.success(
+                enrollmentService.requestReturn(id, userId)
+        ));
+    }
+
+    @PostMapping("/{id}/return-confirm")
+    public ResponseEntity<EnrollmentDto.ApiResponse<EnrollmentDto.EnrollmentResponse>> confirmReturn(
+            @PathVariable Long id,
+            @RequestHeader("X-User-Id") Long reviewerId) {
+        return ResponseEntity.ok(EnrollmentDto.ApiResponse.success(
+                enrollmentService.confirmReturn(id, reviewerId)
+        ));
+    }
+
+    @PostMapping("/{id}/receive")
+    public ResponseEntity<EnrollmentDto.ApiResponse<EnrollmentDto.EnrollmentResponse>> receiveAcquisition(
+            @PathVariable Long id,
+            @RequestHeader("X-User-Id") Long reviewerId,
+            @Valid @RequestBody EnrollmentDto.ReceiveRequest request) {
+        return ResponseEntity.ok(EnrollmentDto.ApiResponse.success(
+                enrollmentService.receiveAcquisition(id, reviewerId, request)
+        ));
+    }
+
     @GetMapping("/my")
     public ResponseEntity<EnrollmentDto.ApiResponse<List<EnrollmentDto.EnrollmentResponse>>> getMyEnrollments(
-            @RequestHeader("X-User-Id") Long userId) {
-
-        List<EnrollmentDto.EnrollmentResponse> response =
-                enrollmentService.getEnrollmentsByUser(userId);
-        return ResponseEntity.ok(EnrollmentDto.ApiResponse.success(response));
+            @RequestHeader("X-User-Id") Long userId,
+            @RequestParam(required = false) Long groupId) {
+        return ResponseEntity.ok(EnrollmentDto.ApiResponse.success(
+                enrollmentService.getEnrollmentsByUser(userId, groupId)
+        ));
     }
 
-    /**
-     * GET /enrollments/user/{userId} - 특정 사용자 수강 목록 조회
-     */
     @GetMapping("/user/{userId}")
     public ResponseEntity<EnrollmentDto.ApiResponse<List<EnrollmentDto.EnrollmentResponse>>> getEnrollments(
-            @PathVariable Long userId) {
-
-        List<EnrollmentDto.EnrollmentResponse> response =
-                enrollmentService.getEnrollmentsByUser(userId);
-        return ResponseEntity.ok(EnrollmentDto.ApiResponse.success(response));
+            @PathVariable Long userId,
+            @RequestParam(required = false) Long groupId) {
+        return ResponseEntity.ok(EnrollmentDto.ApiResponse.success(
+                enrollmentService.getEnrollmentsByUser(userId, groupId)
+        ));
     }
 
-    /**
-     * GET /enrollments/internal/history/{userId} - 수강 이력 조회 (Recommend Service용)
-     */
     @GetMapping("/internal/history/{userId}")
     public ResponseEntity<EnrollmentDto.EnrollmentHistoryResponse> getEnrollmentHistory(
             @PathVariable Long userId) {
-
         return ResponseEntity.ok(enrollmentService.getEnrollmentHistory(userId));
     }
 }

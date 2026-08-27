@@ -1,161 +1,189 @@
-# 검증 결과와 데모 체크리스트
+# GearHub Campus 검증과 데모
 
-## 1. 검증 범위
+## 1. 검증 목표
 
-검증일: 2026-08-26
+검증은 화면이 열리는지만 확인하지 않는다. 다음 세 가지를 함께 증명한다.
 
-현재 소스의 도메인 로직, 서비스 간 REST, Kafka 상태 전파, 프론트 빌드와 Compose 구성을 확인했다. 핵심 API 통합 검증은 각 서비스 포트에서 수행했으며, 새 서비스명으로 Docker를 재기동한 뒤 Gateway 인증 흐름과 화면 캡처를 최종 확인해야 한다.
+1. 대여·반납·도입 상태와 재고가 업무 규칙대로 변한다.
+2. MSA의 동기 호출과 Kafka 이벤트가 종단 간 연결된다.
+3. AI가 기준선보다 나은지 측정되고 관리자 행동으로 이어진다.
 
-## 2. 자동·구성 검사
+상세 수치와 명령의 최종 근거는 [10_FINAL_VALIDATION.md](./10_FINAL_VALIDATION.md)다.
 
-| 검사 | 결과 | 비고 |
-|---|---|---|
-| Member Service `gradlew classes` | PASS | 새 `member-service` 애플리케이션명 포함 |
-| Asset 도메인 단위 테스트 | PASS | 수량 기본값·재고 차감·오류 조건 |
-| Request 도메인 단위 테스트 | PASS | 승인·반려 상태 전이 |
-| Budget 도메인 단위 테스트 | PASS | PENDING에서만 승인·반려 |
-| Alternative Python `compileall` | PASS | 스키마·라우터 문법 확인 |
-| Vue `vite build` | PASS | 111 modules transformed |
-| `docker compose config --quiet` | PASS | 새 5개 업무 서비스명과 의존성 유효 |
-| Gateway Route 환경변수 확인 | PASS | `lb://member/asset/request/budget/alternative-service` |
+## 2. 핵심 인수 결과
 
-## 3. 통합 인수 테스트 결과
-
-| TC | 시나리오 | 기대 결과 | 실제 결과 | 상태 |
-|---|---|---|---|---|
-| TC-01 | 보유 교보재 목록 조회 | `OWNED`, `ACTIVE` 항목과 가용 수량 반환 | 시연용 보유 교보재 8개 반환 | PASS |
-| TC-02 | iPhone 대여 신청 | LOAN Request `PENDING`, 재고 유지 | Request ID 1 PENDING, 재고 2 | PASS |
-| TC-03 | 대여 승인 | Request `ACTIVE`, 재고 1 차감 | ACTIVE, 재고 `2 → 1` | PASS |
-| TC-04 | 신규 Jetson 구매요청 | PURCHASE Request와 Budget `PENDING` | Request ID 2, Budget ID 1 PENDING | PASS |
-| TC-05 | 예산 승인 | Budget `COMPLETED`, Kafka 후 Request `ACTIVE` | 승인번호 생성, Request ACTIVE | PASS |
-| TC-06 | 열화상 카메라 예산 반려 | Budget `FAILED`, Kafka 후 Request `REJECTED` | FAILED, 반려 설명과 REJECTED | PASS |
-| TC-07 | Kafka 소비·후속 발행 | Budget 이벤트 소비 후 Request 상태 변경, 승인 시 후속 이벤트 | 두 토픽의 Producer/Consumer 성공 로그 확인 | PASS |
-| TC-08 | 동일 카테고리 대체재 데이터 | 보유·가용 항목만 최대 5개 | Asset 내부 추천에서 Raspberry Pi·Arduino 등 반환 | PASS |
-| TC-09 | Alternative 외부 인증 호출 | 로그인 토큰으로 Gateway 경유 성공 | 무토큰 직접 호출 403 확인, 인증 화면 E2E는 재기동 후 필요 | READY |
-| TC-10 | 새 Eureka 이름 등록 | 5개 새 업무 서비스명이 UP | 소스·Compose만 변경, 이미지·컨테이너 미변경 | READY |
-| TC-11 | 프론트가 Mock이 아닌 API 모듈 사용 | 목록·신청·승인 화면이 실제 서비스 응답 사용 | 모든 주요 View가 Axios API 모듈을 호출하고 서비스 통합 데이터로 검증 | PASS |
-| TC-12 | Request 중지 시 Asset 조회 독립성 | Request 장애 중에도 Asset 조회 정상 | 현재 컨테이너 상태 보존 요청으로 중지 실험 미수행 | READY |
-| TC-13 | Swagger `Try it out` | 팀원별 담당 API 최소 1회 실제 호출 | 4개 Spring 서비스의 Swagger 설정 확인, 팀별 실행 증거 미수집 | TEAM INPUT |
-
-## 4. 사용한 시연 데이터
-
-### 보유 교보재
-
-- iPhone 15 Pro
-- Galaxy S24 Ultra
-- MacBook Pro 14 M3
-- Raspberry Pi 5 IoT Kit
-- Arduino Uno Sensor Kit
-- AWS 실습 크레딧
-- Insta360 X4
-- 레이저 거리 측정기
-
-### 구매요청 사례
-
-- 승인 사례: NVIDIA Jetson Orin Nano 개발자 키트, 499,000원 × 1
-- 반려 사례: 휴대용 열화상 카메라, 420,000원 × 1
-
-## 5. 새 서비스명 적용 후 최종 재검증
-
-사용자의 요청으로 현재 Docker 이미지는 건드리지 않았다. 나중에 재빌드·재기동을 허용할 때 다음 순서로 확인한다.
-
-1. 새 업무 서비스만 빌드·기동한다.
-2. API Gateway도 환경변수 Route를 적용하도록 재생성한다.
-3. Eureka에서 `MEMBER-SERVICE`, `ASSET-SERVICE`, `REQUEST-SERVICE`, `BUDGET-SERVICE`, `ALTERNATIVE-SERVICE`가 `UP`인지 확인한다.
-4. 학생과 운영진 계정으로 Gateway `:8080`을 경유해 로그인·대여·구매 흐름을 반복한다.
-5. 핵심 서비스 로그에 `ERROR`, `Traceback`, 처리되지 않은 예외가 없는지 확인한다.
-
-## 6. 화면 캡처 목록
-
-캡처는 [evidence/screenshots](../evidence/screenshots/)에 아래 파일명으로 저장한다.
-
-| 파일명 | 화면 | 반드시 보여야 할 정보 | 상태 |
+| ID | 검증 항목 | 기대 결과 | 결과 |
 |---|---|---|---|
-| `01_landing.png` | GearHub 시작 화면 | 서비스 목적과 핵심 가치 | TEAM INPUT |
-| `02_eureka-services.png` | Eureka Dashboard | 새 5개 업무 서비스명과 UP 상태 | READY |
-| `03_asset-list.png` | 교보재 목록 | 여러 카테고리와 가용 수량 | TEAM INPUT |
-| `04_asset-detail-before.png` | 대여 전 상세 | iPhone 가용 수량 2, 신청 사유 입력 | TEAM INPUT |
-| `05_loan-pending.png` | 운영진 승인 화면 | LOAN PENDING과 사용 목적 | TEAM INPUT |
-| `06_asset-detail-after.png` | 대여 승인 후 | Request ACTIVE와 가용 수량 1 | TEAM INPUT |
-| `07_purchase-alternatives.png` | 신규 구매요청 | 같은 카테고리 보유 대체재 | TEAM INPUT |
-| `08_budget-pending.png` | 예산 검토 | 상품 링크·수량·총액·PENDING | TEAM INPUT |
-| `09_purchase-approved.png` | 내 신청 | Budget 승인 후 PURCHASE ACTIVE | TEAM INPUT |
-| `10_purchase-rejected.png` | 내 신청 | PURCHASE REJECTED와 반려 설명 | TEAM INPUT |
-| `11_swagger-api.png` | Swagger UI | 담당 API의 실제 요청·응답 | TEAM INPUT |
-| `12_sprint-board.png` | Sprint Board | To Do·In Progress·Done과 최종 Done SP | TEAM INPUT |
+| V-01 | 전체 기동 | Web 포함 11개 컨테이너 실행 | PASS |
+| V-02 | 인증·그룹 | 관리자 로그인 후 8개 그룹 조회 | PASS |
+| V-03 | 자산 범위 | 공용 + 현재 그룹 자산 조회 | PASS |
+| V-04 | 대여 승인 | PENDING → ACTIVE, 재고 1 감소 | PASS |
+| V-05 | 반납 요청 | ACTIVE → RETURN_REQUESTED, 재고 유지 | PASS |
+| V-06 | 반납 확인 | RETURN_REQUESTED → RETURNED, 재고 1 복구 | PASS |
+| V-07 | 도입 그룹 승인 | PENDING → GROUP_APPROVED, Budget 생성 | PASS |
+| V-08 | 예산 승인 | payment.completed 후 BUDGET_APPROVED | PASS |
+| V-09 | 입고 | RECEIVED, Asset OWNED / ACTIVE와 수량 반영 | PASS |
+| V-10 | 분석 이벤트 | rental.lifecycle가 LIVE로 저장 | PASS |
+| V-11 | 모델 평가 | 테스트 WAPE가 기준선보다 낮음 | PASS |
+| V-12 | 관리자 화면 | 4주 예측, 부족, 이동 제안 표시 | PASS |
+| V-13 | 재고 무결성 | 가용 수량 음수·총수량 초과 0건 | PASS |
 
-### 캡처 원칙
+## 3. 재현 가능한 데모 데이터
 
-- 요청 전과 후가 비교되도록 같은 교보재·같은 계정을 사용한다.
-- 브라우저 주소가 가능하면 `localhost:3000`, API는 Gateway `localhost:8080` 기준임을 보여준다.
-- Access Token, 비밀번호, Client Secret은 화면에 노출하지 않는다.
-- 테스트 데이터와 캡처 순서를 고정해 발표 직전 상태가 달라지지 않게 한다.
+고정 시드 42의 기준:
 
-## 7. 5분 데모 시나리오
+| 데이터 | 수량 | 사용 화면 |
+|---|---:|---|
+| 활성 그룹 | 8 | 그룹 목록 |
+| 대여 가능 자산 | 120 | 자산 카탈로그 |
+| 운영 대여 요청 | 200 | 내 요청·관리자 승인 |
+| 도입 요청 | 8 | 그룹·학교 검토 |
+| SIMULATION 이벤트 | 10,814 | 모델 학습·평가 |
+| 최신 4주 예측 행 | 224 | 그룹 분석 |
+| LIVE 이벤트 | 1 이상 | Kafka 소비 확인 |
 
-### 0:00~0:40 문제와 가치
+데모 계정:
 
-“교육기관과 기업은 내부 장비의 재고·대여·구매요청이 여러 채널에 흩어져 있습니다. GearHub는 구성원의 보유 재고 확인부터 자산 운영자·예산 승인자의 검토까지 한 흐름으로 연결하는 B2B SaaS입니다. 이번 데모는 SKALA 한 조직을 위한 첫 번째 Increment입니다.”
-
-### 0:40~2:00 Sprint 1 결과
-
-1. 교육생으로 교보재 목록을 조회한다.
-2. iPhone 상세의 가용 수량을 확인한다.
-3. 사용 목적과 함께 대여를 신청한다.
-4. 운영진이 신청을 승인한다.
-5. 신청 상태와 재고 감소를 보여준다.
-
-### 2:00~4:10 Sprint 2 결과
-
-1. 신규 교보재 구매요청 화면에서 카테고리를 고른다.
-2. 보유 대체재가 먼저 추천되는 것을 보여준다.
-3. 상품 링크·단가·수량·사유를 제출한다.
-4. 운영진이 예상 총액을 보고 예산을 승인한다.
-5. Kafka를 통해 구매 신청이 ACTIVE가 되는 것을 보여준다.
-6. 반려 사례의 상태와 설명도 짧게 보여준다.
-
-### 4:10~5:00 Agile·MSA 학습점
-
-- Sprint 1에서는 Member·Asset·Request만으로 사용자 가치를 만들었다.
-- Sprint 2에서 Budget·Kafka·Alternative를 독립적으로 확장했다.
-- Auth·Gateway·Eureka는 제공 인프라 계약을 유지했다.
-- 현재 추천은 설명 가능한 규칙 기반 기준선이며 의미 기반 AI 추천은 다음 실험이다.
-
-## 8. 10~12분 기술 데모 시나리오
-
-추가 Agile·MSA PDF의 예시 데모 시간을 GearHub에 맞게 바꾼 버전이다. 발표 시간이 5분이면 앞 절을 사용한다.
-
-| 시간 | 시연 | 확인할 증거 |
+| 역할 | 이메일 | 비밀번호 |
 |---|---|---|
-| 0:00~1:00 | B2B 고객·문제·가치 | 교육기관·기업, 중복 구매, 자산 활용률, 단일 테넌트 MVP 범위 |
-| 1:00~2:00 | 교육생·운영진 로그인 | OAuth2, 이름·역할, 역할별 메뉴 |
-| 2:00~3:00 | Eureka와 MSA 구성 | 제공 인프라와 5개 GearHub 업무 서비스의 `UP` 상태 |
-| 3:00~6:00 | Sprint 1 대여 흐름 | 보유 수량 2 → 신청 PENDING → 승인 ACTIVE → 가용 수량 1 |
-| 6:00~9:30 | Sprint 2 구매·예산 흐름 | 대체재 이유, 링크·수량·총액, Budget 승인·반려 |
-| 9:30~10:30 | Kafka 상태 전파 | `payment.completed`와 Request `ACTIVE/REJECTED` |
-| 10:30~11:30 | Agile 실행 증거 | Sprint Board, Done SP, 계획 대비 미완료 항목, 회고 액션 |
-| 11:30~12:00 | 제한·다음 실험 | 멀티테넌시·권한·반납·의미 기반 추천은 Future라고 명시 |
+| 학교·그룹 관리자 | campus.admin@demo.local | GearHub123! |
+| 일반 구성원 | campus.member@demo.local | GearHub123! |
 
-## 9. 발표 전 Smoke Test
+시드 재실행:
 
-- [ ] Docker 컨테이너와 프론트가 모두 실행 중이다.
-- [ ] Eureka에 새 5개 서비스가 `UP`이다.
-- [ ] 교육생·운영진 계정 로그인이 된다.
-- [ ] Gateway를 통한 교보재 목록 조회가 된다.
-- [ ] 데모용 교보재의 재고가 계획한 값이다.
-- [ ] 대기 중인 대여·예산 요청이 중복으로 남아 있지 않다.
-- [ ] 승인·반려 버튼을 누른 뒤 화면이 갱신된다.
-- [ ] Kafka 이벤트 후 Request 상태가 바뀐다.
-- [ ] 구매 링크가 유효하고 새 탭에서 열린다.
-- [ ] Swagger에서 담당 API를 실제 데이터로 호출했다.
-- [ ] 팀 밖 Review 참석자에게 최소 1개 피드백을 받았다.
-- [ ] 비밀정보가 캡처나 로그 화면에 노출되지 않는다.
+~~~powershell
+docker compose exec -T alternative-service python scripts/seed_demo_data.py
+~~~
 
-## 10. 알려진 제한
+시드 스크립트는 demo.gearhub.local 표시가 있는 운영 데모 행과 SIMULATION 분석 이벤트를 재생성한다. LIVE 이벤트는 삭제하지 않는다.
 
-- 운영진 API의 서버 측 역할 강제는 후속 보강 항목이다.
-- 반납과 재고 복구가 없어 승인된 대여는 자동 종료되지 않는다.
-- 구매요청 상품은 승인 후 실제 보유 Asset으로 자동 입고되지 않는다.
-- Alternative는 카테고리 기반 규칙이며 AI 모델을 사용하지 않는다.
-- 현재 실행 컨테이너는 새 서비스명으로 재기동하기 전이다.
-- 현재 데이터 모델은 조직 구분이 없는 단일 테넌트라 완성형 B2B SaaS는 아니다.
+## 4. 자동 검증 범위
+
+| 대상 | 검증 |
+|---|---|
+| Member | 애플리케이션·그룹 멤버십 |
+| Asset | 자산 기본값, 재고 차감·복구, 입고 |
+| Request | 상태 전이, 기간, 권한, 하위 서비스 연결 |
+| Budget | 예산 승인·반려와 이벤트 |
+| Demand Analytics | 시간순 분할, 4주 예측, 이벤트 변환, 저장 |
+| Vue | production build와 production dependency audit |
+
+Spring 테스트는 호스트에서 실행하므로 MariaDB와 Kafka 주소를 localhost로 지정한다.
+
+~~~powershell
+$env:SPRING_DATASOURCE_URL='jdbc:mariadb://localhost:3379/lecture_db'
+$env:SPRING_DATASOURCE_USERNAME='manager'
+$env:SPRING_DATASOURCE_PASSWORD='SqlDba-1'
+$env:SPRING_KAFKA_BOOTSTRAP_SERVERS='localhost:9092'
+.\gradlew.bat test --no-daemon
+~~~
+
+위 명령은 user-service, course-service, enrollment-service, payment-service에서 각각 실행한다.
+
+Analytics:
+
+~~~powershell
+docker compose exec -T alternative-service python -m pytest -q
+~~~
+
+Frontend:
+
+~~~powershell
+Set-Location vue-frontend
+npm ci
+npm run build
+npm audit --omit=dev
+~~~
+
+## 5. 발표 직전 Smoke Test
+
+~~~powershell
+docker compose ps
+Invoke-WebRequest http://localhost:3000 -UseBasicParsing
+Invoke-WebRequest http://localhost:8761/actuator/health -UseBasicParsing
+~~~
+
+수동 확인:
+
+- http://localhost:3000에 GearHub Campus가 표시되는가
+- 관리자 계정 로그인 후 /groups가 열리는가
+- /groups/1에서 자산과 관리자 메뉴가 보이는가
+- /groups/1/loans에 대여 상태가 보이는가
+- /groups/1/admin에 대여·도입 검토가 보이는가
+- /groups/1/analytics에 평가와 7개 카테고리가 보이는가
+
+## 6. 5분 데모 시나리오
+
+### 0:00~0:35 문제와 제품
+
+“학교 공용 장비와 학과·동아리 장비가 흩어져 있어 대여부터 반납, 도입까지 추적하기 어렵다”는 문제를 설명한다. 그룹별 서버가 아니라 하나의 동적 워크스페이스를 사용한다는 결정을 함께 말한다.
+
+### 0:35~1:10 그룹과 자산
+
+관리자 계정으로 로그인해 8개 그룹을 보여준다. 컴퓨터공학과에서 학교 공용 자산과 그룹 전용 자산, 총수량·가용수량·픽업 위치·최대 대여일을 보여준다.
+
+### 1:10~2:20 대여와 반납
+
+구성원이 자산을 신청하고 관리자가 승인해 가용 수량이 감소하는 것을 보여준다. 구성원의 반납 요청만으로는 수량이 오르지 않으며, 관리자가 실물을 확인한 뒤 복구된다는 점을 강조한다.
+
+### 2:20~3:15 도입과 예산
+
+미보유 장비 도입 요청을 만든다. 그룹 승인 → 학교 예산 승인 → 입고 → 대여 가능한 자산 전환 흐름을 상태와 서비스 기준으로 설명한다.
+
+### 3:15~4:35 수요예측
+
+먼저 기준선 WAPE 70.3414%와 모델 WAPE 55.7159%를 보여준다. 다음으로 4주 예상 수요, 필요 수량, 현재 재고, 부족 수량과 다른 그룹 이동 제안을 보여준다.
+
+### 4:35~5:00 결론
+
+“생성형 AI API를 붙인 것이 아니라 대여 이벤트를 시간순으로 학습하고 단순 기준선과 비교해, 재고 이동과 도입 판단으로 연결했다”로 마무리한다.
+
+## 7. 기술 데모에서 추가할 내용
+
+발표 시간이 10분 이상이면 다음을 추가한다.
+
+1. Eureka의 7개 애플리케이션 등록 상태
+2. Member·Asset·Request·Budget·Analytics의 데이터 소유권
+3. payment.completed와 rental.lifecycle 이벤트
+4. 운영 200건과 분석 10,814건을 분리한 이유
+5. Poisson, Random Forest, Histogram Gradient Boosting의 검증 비교
+6. peak 수요와 평균 대여기간으로 필요 수량을 계산하는 방식
+7. 분산 트랜잭션과 합성 데이터의 현재 한계
+
+## 8. 화면 증빙 목록
+
+실제 제출 이미지가 필요하면 docs/evidence/screenshots에 다음 파일명으로 저장한다.
+
+| 파일명 | 내용 |
+|---|---|
+| 01-groups.png | 8개 그룹 목록 |
+| 02-group-dashboard.png | 그룹 요약과 권한 메뉴 |
+| 03-assets-before.png | 대여 승인 전 자산 수량 |
+| 04-loan-active.png | 승인된 대여와 감소한 수량 |
+| 05-return-requested.png | 반납 요청, 수량 유지 |
+| 06-returned.png | 반납 확인과 수량 복구 |
+| 07-acquisition.png | 도입 요청 상태 |
+| 08-budget.png | 학교 예산 검토 |
+| 09-analytics-evaluation.png | 기준선과 모델 평가 |
+| 10-analytics-forecast.png | 부족·이동 제안 |
+| 11-compose.png | 11개 컨테이너 |
+| 12-eureka.png | 서비스 등록 |
+
+현재 저장소에는 캡처 파일이 아직 없으므로 제출 전 TEAM INPUT으로 실제 이미지를 추가해야 한다. 토큰, 비밀번호, client secret은 캡처하지 않는다.
+
+## 9. 실패 시 점검 순서
+
+1. docker compose ps로 중지된 서비스가 있는지 본다.
+2. Auth, Eureka, MariaDB, Kafka의 health 상태를 확인한다.
+3. Gateway와 대상 서비스 로그를 함께 확인한다.
+4. 브라우저 sessionStorage의 현재 groupId와 로그인 토큰을 확인한다.
+5. 데이터가 꼬였으면 데모 시드를 재실행한다.
+6. AI 결과가 없으면 이벤트 수를 확인한 뒤 train API를 실행한다.
+
+## 10. 데모에서 숨기지 않을 한계
+
+- 한 학교 안의 멀티그룹이며 다학교 테넌시는 아니다.
+- 미래 날짜가 겹치는 예약 수량을 별도 계산하지 않는다.
+- 시리얼별 손상·수리·분실과 실제 발주·배송은 없다.
+- AI 수치는 합성 이력으로 파이프라인과 비교 방법을 검증한 결과다.
+- 분산 트랜잭션 보상, 내부 서비스 인증, 감사로그는 제품화 과제다.

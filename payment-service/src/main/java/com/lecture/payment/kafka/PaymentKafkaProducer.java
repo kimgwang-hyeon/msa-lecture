@@ -60,6 +60,8 @@ public class PaymentKafkaProducer {
         private Long paymentId;
         private Long userId;
         private Long courseId;
+        private Long requestId;
+        private Long groupId;
         private String status;
     }
 }
