@@ -6,22 +6,23 @@
       <section class="hero">
         <div class="container hero-grid">
           <div class="hero-copy reveal is-visible">
-            <h1>학교와 그룹의 장비를<br><em>함께 빌리고 운영하세요.</em></h1>
-            <p>학과·연구실·동아리마다 별도 워크스페이스를 만들고, 학교 공용 자산과 그룹 전용 자산의 대여·반납·도입을 연결합니다.</p>
+            <h1><em>U</em>niversal <em>S</em>torag<em>E</em></h1>
+            <p>워크스페이스를 만들고, 자산의 대여, 반납, 도입을 연결합니다.</p>
             <div class="hero-actions">
               <router-link :to="auth.isAuthenticated ? '/groups' : '/login'" class="btn btn-primary btn-lg">
-                {{ auth.isAuthenticated ? '내 그룹 들어가기' : 'UniverStroageE 시작하기' }}
+                <template v-if="auth.isAuthenticated">내 그룹 들어가기</template>
+                <template v-else><em>U</em>niversal <em>S</em>torag<em>E</em> 시작하기</template>
               </router-link>
               <router-link v-if="auth.isAuthenticated" to="/groups" class="btn btn-outline btn-lg">그룹 선택</router-link>
             </div>
             <div class="trust-row">
-              <span><AppIcon name="check" :size="13" />그룹별 권한</span><span><AppIcon name="check" :size="13" />대여·반납 추적</span><span><AppIcon name="check" :size="13" />AI 수요예측</span>
+              <span><AppIcon name="check" :size="13" />그룹별 권한</span><span><AppIcon name="check" :size="13" />대여, 반납 추적</span><span><AppIcon name="check" :size="13" />AI 수요예측</span>
             </div>
           </div>
 
           <div class="workflow-card reveal is-visible reveal-delay-1">
             <div class="workflow-head">
-              <div><small>오늘의 UniverStroageE</small><strong>조직 자산 운영 현황</strong></div>
+              <div><strong>조직 자산 운영 현황</strong></div>
               <span class="live-dot">운영 중</span>
             </div>
             <div class="workflow-list">
@@ -32,7 +33,6 @@
                 <span class="arrow">→</span>
               </div>
             </div>
-            <div class="workflow-foot"><span>MSA 기반 자산 흐름</span><strong>5 services connected</strong></div>
           </div>
         </div>
       </section>
@@ -40,7 +40,7 @@
       <section ref="categorySection" class="category-section reveal-section">
         <div class="container">
           <div class="section-heading">
-            <div><span class="eyebrow">RESOURCE CATEGORIES</span><h2>팀과 전공을 넘나드는 업무·교육 장비</h2></div>
+            <div><span class="eyebrow">RESOURCE CATEGORIES</span><h2>편리한 업무, 교육 장비 관리</h2></div>
             <router-link :to="auth.isAuthenticated ? '/groups' : '/login'" class="text-link">그룹에서 자산 보기 →</router-link>
           </div>
           <div class="category-grid">
@@ -55,8 +55,8 @@
         <div class="container why-grid">
           <div class="why-copy">
             <span class="eyebrow">WHY GEARHUB</span>
-            <h2>감이 아니라 데이터로,<br>다음 4주의 장비 수요를.</h2>
-            <p>18개월 요청 이력을 학습하고 단순 이동평균과 scikit-learn 모델을 비교해 관리자에게 부족 재고와 그룹 간 이동 대안을 보여줍니다.</p>
+            <h2>AI와 함께 장비수요를 예측해보세요</h2>
+            <p>18개월 요청 이력을 학습해 관리자에게 부족 재고와 그룹 간 이동 대안을 보여줍니다.</p>
           </div>
           <div class="benefit-list">
             <div v-for="(benefit, index) in benefits" :key="benefit.title" class="benefit reveal-item" :style="{ '--item-delay': `${index * 90}ms` }">
@@ -67,7 +67,7 @@
       </section>
     </main>
 
-    <footer><div class="container"><strong>UniverStroageE</strong></div></footer>
+    <footer><div class="container"><strong>Universal StoragE</strong></div></footer>
   </div>
 </template>
 
@@ -95,20 +95,20 @@ onMounted(() => {
 
 onBeforeUnmount(() => revealObserver?.disconnect())
 const workflow = [
-  { icon: 'home', title: '그룹 워크스페이스', desc: '학과·연구실·동아리별 공간' },
-  { icon: 'swap', title: '대여와 반납', desc: '기간·승인·재고를 함께 추적' },
+  { icon: 'home', title: '그룹 워크스페이스', desc: '학과, 연구실, 동아리별 공간' },
+  { icon: 'swap', title: '대여와 반납', desc: '기간, 승인, 재고를 함께 추적' },
   { icon: 'sparkle', title: '관리자 수요예측', desc: '4주 부족 수량과 이동 대안' }
 ]
 const categories = [
   { icon: 'device', title: '스마트기기', desc: 'iPhone, Android, 태블릿' },
   { icon: 'computer', title: '컴퓨터', desc: '노트북, 워크스테이션' },
-  { icon: 'circuit', title: '전자·IoT', desc: '센서, Arduino, Raspberry Pi' },
-  { icon: 'tools', title: '메이커·건축', desc: '측정 도구, 제작 장비' }
+  { icon: 'circuit', title: '전자, IoT', desc: '센서, Arduino, Raspberry Pi' },
+  { icon: 'tools', title: '메이커, 건축', desc: '측정 도구, 제작 장비' }
 ]
 const benefits = [
   { number: '01', title: '재고가 보이면 바로 대여', desc: '자산 운영자가 보유 수량과 신청을 같은 흐름에서 관리합니다.' },
   { number: '02', title: '도입 요청은 사람의 근거로', desc: '구성원이 필요성을 설명하고 그룹 관리자와 학교 관리자가 순서대로 검토합니다.' },
-  { number: '03', title: 'AI는 관리자 의사결정에', desc: '기준선과 모델 성능을 공개하고 수요·재고·대여기간을 함께 비교합니다.' }
+  { number: '03', title: 'AI는 관리자 의사결정에', desc: '기준선과 모델 성능을 공개하고 수요, 재고, 대여기간을 함께 비교합니다.' }
 ]
 </script>
 
@@ -122,12 +122,12 @@ const benefits = [
 .hero h1 em { color: var(--color-primary); font-style: normal; }
 .hero-copy > p { max-width: 570px; margin-top: 22px; color: var(--color-text-secondary); font-size: 16px; line-height: 1.8; }
 .hero-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 30px; }
+.hero-actions em { color: #bfdbfe; font-style: normal; }
 .trust-row { display: flex; flex-wrap: wrap; gap: 18px; margin-top: 27px; color: var(--color-text-secondary); font-size: 11px; font-weight: 600; }
 .trust-row span { display: inline-flex; align-items: center; gap: 4px; }
 .workflow-card { padding: 26px; background: rgba(255,255,255,.88); border: 1px solid rgba(190, 211, 241, .86); border-radius: var(--radius-xl); box-shadow: var(--shadow-lg); backdrop-filter: blur(16px); }
-.workflow-head, .workflow-foot { display: flex; align-items: center; justify-content: space-between; }
+.workflow-head { display: flex; align-items: center; justify-content: space-between; }
 .workflow-head div { display: flex; flex-direction: column; }
-.workflow-head small { color: var(--color-text-muted); font-size: 10px; }
 .workflow-head strong { margin-top: 2px; color: var(--color-navy); font-size: 17px; }
 .live-dot { color: var(--color-success); background: var(--color-success-light); border-radius: 999px; padding: 5px 9px; font-size: 10px; font-weight: 700; }
 .workflow-list { display: flex; flex-direction: column; gap: 10px; margin: 23px 0; }
@@ -139,8 +139,6 @@ const benefits = [
 .workflow-item strong { font-size: 12px; }
 .workflow-item small { color: var(--color-text-muted); font-size: 10px; }
 .arrow { color: #7894bd; }
-.workflow-foot { padding-top: 15px; border-top: 1px solid var(--color-border); color: var(--color-text-muted); font-size: 9px; }
-.workflow-foot strong { color: var(--color-primary); text-transform: uppercase; letter-spacing: .05em; }
 .category-section { padding: 64px 0; }
 .section-heading { display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 28px; }
 .section-heading h2, .why-copy h2 { color: var(--color-navy); font-size: clamp(27px, 3vw, 38px); line-height: 1.25; letter-spacing: -.04em; }

@@ -23,7 +23,7 @@
       <p>{{ course.description || '수업, 연구와 그룹 활동에 사용할 수 있는 자산입니다.' }}</p>
       <dl class="card-meta">
         <div>
-          <dt>수령·반납</dt>
+          <dt>수령, 반납</dt>
           <dd>{{ course.pickupLocation || '그룹 운영실' }}</dd>
         </div>
         <div>

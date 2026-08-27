@@ -8,7 +8,6 @@
             <div>
               <span class="eyebrow">GROUP OPERATIONS DESK</span>
               <h1 class="page-title">운영 데스크</h1>
-              <p class="page-subtitle">요청자·일정·재고를 함께 확인하고 대여 승인부터 반납, 도입과 입고까지 처리합니다.</p>
             </div>
             <button class="btn btn-ghost" :disabled="loading" @click="loadAll">
               <AppIcon name="refresh" :size="15" />
@@ -71,7 +70,7 @@
             >
               <div class="request-header">
                 <div>
-                  <span class="request-type">{{ tabLabel }} · {{ requestNumber(item) }}</span>
+                  <span class="request-type">{{ tabLabel }}, {{ requestNumber(item) }}</span>
                   <h2>{{ item.course?.title || `자산 #${item.courseId}` }}</h2>
                 </div>
                 <span class="queue-age">{{ item.createdAt ? dateTime(item.createdAt) : '처리 대기' }}</span>
@@ -108,7 +107,7 @@
                   <dd>{{ item.course.totalQuantity }}개</dd>
                 </div>
                 <div v-if="item.course?.pickupLocation">
-                  <dt>수령·반납</dt>
+                  <dt>수령, 반납</dt>
                   <dd>{{ item.course.pickupLocation }}</dd>
                 </div>
                 <div v-if="item.amount != null">
@@ -157,7 +156,7 @@
                   >
                     <input v-model="returnChecks[item.id].condition" type="checkbox" :disabled="busyKey === item.id" />
                     <span class="return-check-indicator" aria-hidden="true"><AppIcon name="check" :size="14" /></span>
-                    <span>외관·작동 상태</span>
+                    <span>외관, 작동 상태</span>
                   </label>
                   <label
                     class="return-check"
@@ -165,7 +164,7 @@
                   >
                     <input v-model="returnChecks[item.id].accessories" type="checkbox" :disabled="busyKey === item.id" />
                     <span class="return-check-indicator" aria-hidden="true"><AppIcon name="check" :size="14" /></span>
-                    <span>구성품·충전기</span>
+                    <span>구성품, 충전기</span>
                   </label>
                   <label
                     class="return-check"
@@ -181,7 +180,7 @@
                   :disabled="busyKey === item.id || !returnReady(item.id)"
                   @click="askConfirmReturn(item)"
                 >
-                  반납 확인·재고 복원
+                  반납 확인, 재고 복원
                 </button>
               </section>
 
@@ -220,7 +219,7 @@
                     <input v-model.number="intakeForms[item.id].receivedQuantity" type="number" min="1" />
                   </label>
                   <label>
-                    <span>수령·반납 장소</span>
+                    <span>수령, 반납 장소</span>
                     <input v-model.trim="intakeForms[item.id].pickupLocation" placeholder="예: 공학관 301호" />
                   </label>
                   <label>
@@ -232,7 +231,7 @@
                   </label>
                 </div>
                 <button class="btn btn-primary btn-sm" :disabled="busyKey === item.id" @click="askReceive(item)">
-                  입고 완료·자산 전환
+                  입고 완료, 자산 전환
                 </button>
               </section>
             </article>
@@ -495,7 +494,7 @@ function askConfirmReturn(item) {
   ask({
     title: `${item.course?.title} 반납을 완료할까요?`,
     description: '외관, 구성품과 데이터 정리를 확인했습니다. 완료하면 가용 재고 1개가 즉시 복원됩니다.',
-    confirmLabel: '반납 완료·재고 복원',
+    confirmLabel: '반납 완료, 재고 복원',
     run: () => act(item.id, () => enrollmentApi.confirmReturn(item.id), `${item.course?.title} 반납을 확인하고 재고를 복원했습니다.`)
   })
 }
@@ -519,13 +518,13 @@ function askBudget(item, approved) {
 function askReceive(item) {
   const form = intakeForms[item.id]
   if (!form?.pickupLocation || Number(form.receivedQuantity) < 1) {
-    error.value = '입고 수량과 수령·반납 장소를 확인해 주세요.'
+    error.value = '입고 수량과 수령, 반납 장소를 확인해 주세요.'
     return
   }
   ask({
     title: `${item.course?.title}을 자산으로 전환할까요?`,
     description: `${form.receivedQuantity}개를 ${form.pickupLocation}에서 대여 가능한 상태로 등록합니다.`,
-    confirmLabel: '입고 완료·자산 전환',
+    confirmLabel: '입고 완료, 자산 전환',
     run: () => act(item.id, () => enrollmentApi.receive(item.id, form), `${item.course?.title}을 대여 가능한 자산으로 전환했습니다.`)
   })
 }

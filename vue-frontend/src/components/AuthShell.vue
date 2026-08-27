@@ -3,23 +3,10 @@
     <div class="auth-atmosphere" aria-hidden="true"></div>
 
     <section class="auth-layout">
-      <aside class="auth-brand-panel" aria-label="UniverStroageE 소개">
-        <router-link to="/" class="auth-brand" aria-label="UniverStroageE 홈">
+      <aside class="auth-brand-panel" aria-label="Universal StoragE 소개">
+        <router-link to="/" class="auth-brand" aria-label="Universal StoragE 홈">
           <GearHubLogo class="auth-brand-logo" aria-hidden="true" />
         </router-link>
-
-        <div class="auth-brand-copy">
-          <p class="auth-brand-heading">조직 장비 운영을<br />더 간단하게</p>
-          <p class="auth-brand-description">
-            학교와 소속 그룹의 자산을 찾고 대여·반납·도입 현황을 확인하세요.
-          </p>
-          <ul class="auth-feature-list">
-            <li v-for="feature in features" :key="feature">
-              <span aria-hidden="true"></span>
-              {{ feature }}
-            </li>
-          </ul>
-        </div>
       </aside>
 
       <div class="auth-main-panel">
@@ -51,11 +38,6 @@ defineProps({
   }
 })
 
-const features = [
-  '학교 공용·그룹 전용 자산 조회',
-  '대여 승인과 반납 확인',
-  '관리자용 AI 수요예측'
-]
 </script>
 
 <style scoped>

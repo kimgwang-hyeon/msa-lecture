@@ -31,7 +31,7 @@
               <dl class="spec-grid">
                 <div><dt>전체 수량</dt><dd>{{ course.totalQuantity }}개</dd></div>
                 <div><dt>가용 수량</dt><dd :class="{ danger: available === 0 }">{{ available }}개</dd></div>
-                <div><dt>수령·반납 장소</dt><dd>{{ course.pickupLocation || '그룹 운영실' }}</dd></div>
+                <div><dt>수령, 반납 장소</dt><dd>{{ course.pickupLocation || '그룹 운영실' }}</dd></div>
                 <div><dt>최대 대여</dt><dd>{{ course.maxLoanDays || 7 }}일</dd></div>
               </dl>
             </div>
@@ -113,7 +113,7 @@
                 <textarea
                   v-model.trim="form.reason"
                   class="form-textarea"
-                  placeholder="수업명, 연구·행사 목적과 사용 장소를 구체적으로 적어 주세요."
+                  placeholder="수업명, 연구, 행사 목적과 사용 장소를 구체적으로 적어 주세요."
                   maxlength="500"
                 ></textarea>
                 <small class="character-count">{{ form.reason.length }}/500</small>

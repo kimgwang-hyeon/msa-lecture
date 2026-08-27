@@ -29,7 +29,6 @@
         <section class="profile-content">
           <div class="page-heading compact-heading">
             <div>
-              <span class="eyebrow">MY GEARHUB</span>
               <h1 class="page-title">나의 캠퍼스 허브</h1>
               <p class="page-subtitle">소속 그룹과 전체 요청 현황을 한눈에 확인하고, 최근 업무를 이어가세요.</p>
             </div>
@@ -53,7 +52,7 @@
               <div class="summary-card surface">
                 <span class="summary-label">진행 중 요청</span>
                 <strong class="summary-value">{{ openCount }}</strong>
-                <small>검토·대여·입고 대기</small>
+                <small>검토, 대여, 입고 대기</small>
               </div>
               <div class="summary-card surface">
                 <span class="summary-label">현재 대여</span>
@@ -63,11 +62,11 @@
               <div class="summary-card surface">
                 <span class="summary-label">완료 이력</span>
                 <strong class="summary-value">{{ completedCount }}</strong>
-                <small>반납·입고 완료</small>
+                <small>반납, 입고 완료</small>
               </div>
             </section>
 
-            <section class="quick-grid" aria-label="빠른 이동">
+            <section v-if="!auth.isInstructor" class="quick-grid" aria-label="빠른 이동">
               <router-link to="/groups" class="quick-card surface">
                 <span aria-hidden="true"><AppIcon name="home" :size="22" /></span>
                 <div><strong>그룹 선택</strong><p>워크스페이스를 전환합니다.</p></div>
@@ -110,7 +109,7 @@
                       <span>REQ-{{ String(item.id).padStart(4, '0') }}</span>
                     </div>
                     <strong>{{ item.course?.title || `자산 #${item.courseId}` }}</strong>
-                    <small>{{ groupName(item.groupId) }} · {{ dateTime(item.createdAt) }}</small>
+                    <small>{{ groupName(item.groupId) }}, {{ dateTime(item.createdAt) }}</small>
                   </div>
                   <b aria-hidden="true">→</b>
                 </router-link>

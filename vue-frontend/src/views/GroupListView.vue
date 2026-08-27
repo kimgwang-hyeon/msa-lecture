@@ -7,7 +7,6 @@
           <div>
             <span class="eyebrow">CAMPUS WORKSPACES</span>
             <h1 class="page-title">내 그룹</h1>
-            <p class="page-subtitle">학과·연구실·동아리별 자산 공간을 선택하고, 맡은 역할에 맞는 업무를 이어가세요.</p>
           </div>
           <button class="btn btn-ghost" :disabled="loading" @click="load"><AppIcon name="refresh" :size="16" /> 새로고침</button>
         </div>

@@ -11,7 +11,7 @@
             <h1 class="page-title">보유 자산 등록</h1>
             <p class="page-subtitle">실제로 입고되어 즉시 대여할 수 있는 장비의 재고와 운영 조건을 등록합니다.</p>
           </div>
-          <span v-if="group" class="group-context">{{ group.name }} · 관리자</span>
+          <span v-if="group" class="group-context">{{ group.name }}, 관리자</span>
         </div>
 
         <div v-if="loading" class="loading-state surface">
@@ -80,7 +80,7 @@
                 </label>
 
                 <label class="field">
-                  <span>수령·반납 장소 <b>*</b></span>
+                  <span>수령, 반납 장소 <b>*</b></span>
                   <input v-model.trim="form.pickupLocation" class="form-input" maxlength="100" placeholder="예: 공학관 301호" />
                 </label>
 
@@ -145,18 +145,13 @@
               <div class="preview-icon" aria-hidden="true"><AppIcon :name="selectedCategory?.icon || 'grid'" :size="34" /></div>
               <span class="preview-scope">{{ scopeLabel }}</span>
               <h2>{{ form.title || '등록할 자산명' }}</h2>
-              <p>{{ form.description || '자산 설명과 주의사항이 여기에 표시됩니다.' }}</p>
+              <p v-if="form.description">{{ form.description }}</p>
               <dl>
                 <div><dt>초기 가용</dt><dd>{{ validQuantity }}개</dd></div>
                 <div><dt>최대 대여</dt><dd>{{ validLoanDays }}일</dd></div>
-                <div><dt>수령·반납</dt><dd>{{ form.pickupLocation || '장소 미입력' }}</dd></div>
+                <div><dt>수령, 반납</dt><dd>{{ form.pickupLocation || '장소 미입력' }}</dd></div>
                 <div><dt>취득 금액</dt><dd>{{ money(totalValue) }}</dd></div>
               </dl>
-            </section>
-
-            <section class="inventory-rule notice">
-              <strong>등록 즉시 재고가 열립니다.</strong>
-              <p>보유 수량 전체가 가용 수량으로 생성됩니다. 대여 승인 시 1개가 차감되고, 반납 확인 후 복원됩니다.</p>
             </section>
           </aside>
         </div>
@@ -218,7 +213,7 @@ function validate() {
   if (!Number.isInteger(Number(form.totalQuantity)) || Number(form.totalQuantity) < 1 || Number(form.totalQuantity) > 999) {
     return '보유 수량은 1개 이상 999개 이하로 입력해 주세요.'
   }
-  if (!form.pickupLocation) return '구성원이 방문할 수령·반납 장소를 입력해 주세요.'
+  if (!form.pickupLocation) return '구성원이 방문할 수령, 반납 장소를 입력해 주세요.'
   if (!Number.isInteger(Number(form.maxLoanDays)) || Number(form.maxLoanDays) < 1 || Number(form.maxLoanDays) > 60) {
     return '최대 대여기간은 1일 이상 60일 이하로 입력해 주세요.'
   }
@@ -392,8 +387,6 @@ onMounted(async () => {
 .preview dl > div { display: flex; justify-content: space-between; gap: 12px; }
 .preview dt { color: var(--color-text-muted); font-size: 10px; }
 .preview dd { color: var(--color-navy); font-size: 10px; font-weight: 750; text-align: right; }
-.inventory-rule strong { display: block; font-size: 12px; }
-.inventory-rule p { margin-top: 4px; font-size: 10px; line-height: 1.55; }
 
 @media (max-width: 900px) {
   .create-layout { grid-template-columns: 1fr; }

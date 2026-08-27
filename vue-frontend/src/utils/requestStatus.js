@@ -12,7 +12,7 @@ export const REQUEST_STATUS = {
 
 export const LOAN_STEPS = [
   { status: 'PENDING', label: '신청' },
-  { status: 'ACTIVE', label: '승인·대여' },
+  { status: 'ACTIVE', label: '승인, 대여' },
   { status: 'RETURN_REQUESTED', label: '반납 요청' },
   { status: 'RETURNED', label: '반납 완료' }
 ]
@@ -21,7 +21,7 @@ export const ACQUISITION_STEPS = [
   { status: 'PENDING', label: '요청' },
   { status: 'GROUP_APPROVED', label: '그룹 검토' },
   { status: 'BUDGET_APPROVED', label: '예산 검토' },
-  { status: 'RECEIVED', label: '입고·자산화' }
+  { status: 'RECEIVED', label: '입고, 자산화' }
 ]
 
 export function statusMeta(status) {

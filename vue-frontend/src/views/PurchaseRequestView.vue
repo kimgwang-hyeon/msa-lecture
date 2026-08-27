@@ -25,7 +25,7 @@
               <li class="active"><span>1</span>요청 작성</li>
               <li><span>2</span>그룹 검토</li>
               <li><span>3</span>학교 예산</li>
-              <li><span>4</span>입고·자산화</li>
+              <li><span>4</span>입고, 자산화</li>
             </ol>
 
             <form @submit.prevent="submit">
@@ -111,7 +111,7 @@
               <li><strong>대체 가능성</strong><span>다른 그룹이나 학교 공용 자산으로 해결 가능한가?</span></li>
               <li><strong>활용 규모</strong><span>누가, 언제, 얼마나 자주 사용하는가?</span></li>
               <li><strong>비용 적정성</strong><span>수량과 사양이 목적에 비해 적절한가?</span></li>
-              <li><strong>운영 계획</strong><span>입고 후 보관·대여·반납을 관리할 수 있는가?</span></li>
+              <li><strong>운영 계획</strong><span>입고 후 보관, 대여, 반납을 관리할 수 있는가?</span></li>
             </ul>
             <div class="guide-note">실제 결제는 발생하지 않으며, 실습에서는 예산 검토 상태만 관리합니다.</div>
           </aside>

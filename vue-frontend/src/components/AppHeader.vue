@@ -4,7 +4,7 @@
       <router-link
         :to="auth.isAuthenticated ? '/groups' : '/'"
         class="brand"
-        aria-label="UniverStroageE 홈"
+        aria-label="Universal StoragE 홈"
       >
         <GearHubLogo />
       </router-link>
@@ -87,7 +87,7 @@
           <div class="mobile-account">
             <div>
               <strong>{{ auth.user?.name || '사용자' }}</strong>
-              <span>{{ roleLabel }} · {{ auth.user?.email }}</span>
+              <span>{{ roleLabel }}, {{ auth.user?.email }}</span>
             </div>
             <button :disabled="loggingOut" @click="handleLogout">
               {{ loggingOut ? '처리 중' : '로그아웃' }}

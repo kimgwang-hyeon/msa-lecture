@@ -6,11 +6,11 @@ export const categoryOptions = [
   { value: 'ALL', label: '전체', icon: 'grid' },
   { value: 'DEVICE', label: '스마트기기', icon: 'device' },
   { value: 'COMPUTER', label: '컴퓨터', icon: 'computer' },
-  { value: 'SERVER_CLOUD', label: '서버·클라우드', icon: 'cloud' },
-  { value: 'ELECTRONICS_IOT', label: '전자·IoT', icon: 'circuit' },
-  { value: 'MAKER', label: '메이커·건축', icon: 'tools' },
-  { value: 'CAMERA_AUDIO', label: '촬영·음향', icon: 'camera' },
-  { value: 'PRESENTATION', label: '발표·행사', icon: 'presentation' },
+  { value: 'SERVER_CLOUD', label: '서버, 클라우드', icon: 'cloud' },
+  { value: 'ELECTRONICS_IOT', label: '전자, IoT', icon: 'circuit' },
+  { value: 'MAKER', label: '메이커, 건축', icon: 'tools' },
+  { value: 'CAMERA_AUDIO', label: '촬영, 음향', icon: 'camera' },
+  { value: 'PRESENTATION', label: '발표, 행사', icon: 'presentation' },
   { value: 'ACCESSORY', label: '부속품', icon: 'accessory' },
   { value: 'ETC', label: '기타', icon: 'plus' }
 ]
@@ -18,7 +18,7 @@ export const categoryOptions = [
 const legacyLabels = {
   BACKEND: '개발장비',
   FRONTEND: '디자인장비',
-  DEVOPS: '서버·클라우드',
+  DEVOPS: '서버, 클라우드',
   DATA_SCIENCE: '데이터장비',
   MOBILE: '스마트기기',
   SECURITY: '보안장비',

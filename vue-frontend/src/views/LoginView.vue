@@ -2,7 +2,6 @@
   <AuthShell close-to="/" close-label="로그인을 닫고 홈으로 이동">
     <div class="login-section">
       <h1 class="section-title">로그인</h1>
-      <p class="section-description">학교 계정으로 로그인해 소속 그룹을 선택합니다.</p>
 
       <div v-if="expired" class="session-notice" role="status">
         안전을 위해 로그인 시간이 만료되었습니다. 다시 로그인해 주세요.

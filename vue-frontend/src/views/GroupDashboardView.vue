@@ -18,9 +18,9 @@
               <span class="eyebrow">{{ isManager ? 'GROUP OPERATIONS' : 'GROUP WORKSPACE' }}</span>
               <h1>{{ group.name }}</h1>
               <p>{{ group.description || '우리 그룹의 공용 장비를 함께 운영합니다.' }}</p>
-              <div class="hero-role">
-                <span>{{ isManager ? '관리자 모드' : '구성원 모드' }}</span>
-                <small>{{ isManager ? '승인·반납·도입과 재고를 관리합니다.' : '자산을 찾고 내 요청을 추적합니다.' }}</small>
+              <div v-if="!isManager" class="hero-role">
+                <span>구성원 모드</span>
+                <small>자산을 찾고 내 요청을 추적합니다.</small>
               </div>
             </div>
             <div v-if="isManager" class="invite">
@@ -51,7 +51,7 @@
             <div class="summary-card surface">
               <span class="summary-label">{{ isManager ? '처리할 요청' : '내 처리 대기' }}</span>
               <strong class="summary-value warning">{{ pendingRequests }}</strong>
-              <small>{{ isManager ? '승인·반납·도입' : '승인·예산 검토 중' }}</small>
+              <small>{{ isManager ? '승인, 반납, 도입' : '승인, 예산 검토 중' }}</small>
             </div>
             <div class="summary-card surface">
               <span class="summary-label">{{ isManager ? '그룹 구성원' : '대여 가능 자산' }}</span>
@@ -105,7 +105,7 @@
             </router-link>
             <router-link v-if="!isManager" :to="path('/loans')" class="module surface">
               <span class="module-icon blue"><AppIcon name="swap" :size="23" /></span>
-              <div><strong>내 대여·도입 요청</strong><p>승인과 반납 상태를 추적합니다.</p></div>
+              <div><strong>내 대여, 도입 요청</strong><p>승인과 반납 상태를 추적합니다.</p></div>
               <b aria-hidden="true">→</b>
             </router-link>
             <router-link v-if="!isManager" :to="path('/acquisitions/new')" class="module surface">
@@ -115,7 +115,7 @@
             </router-link>
             <router-link v-if="isManager" :to="path('/admin')" class="module surface">
               <span class="module-icon purple"><AppIcon name="check" :size="23" /></span>
-              <div><strong>운영 데스크</strong><p>대여·반납·도입·입고를 처리합니다.</p></div>
+              <div><strong>운영 데스크</strong><p>대여, 반납, 도입, 입고를 처리합니다.</p></div>
               <b aria-hidden="true">→</b>
             </router-link>
             <router-link v-if="isManager" :to="path('/analytics')" class="module ai-module">
@@ -143,7 +143,7 @@
                 <span aria-hidden="true"><AppIcon :name="categoryIcon(asset.category)" :size="21" /></span>
                 <div>
                   <strong>{{ asset.title }}</strong>
-                  <small>{{ asset.availableQuantity }}개 · {{ asset.pickupLocation || '운영실' }}</small>
+                  <small>{{ asset.availableQuantity }}개, {{ asset.pickupLocation || '운영실' }}</small>
                 </div>
                 <b aria-hidden="true">→</b>
               </router-link>
@@ -230,7 +230,7 @@ const actionItems = computed(() => {
       },
       {
         key: 'acquisition',
-        title: '도입·입고 검토',
+        title: '도입, 입고 검토',
         description: '필요성과 예산 승인 장비를 검토합니다.',
         count: operations.acquisitions.length + operations.intake.length,
         icon: 'plus',

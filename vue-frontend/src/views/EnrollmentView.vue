@@ -6,7 +6,6 @@
         <div class="page-heading">
           <div>
             <span class="eyebrow">MY REQUESTS</span>
-            <h1 class="page-title">내 대여·도입 요청</h1>
             <p class="page-subtitle">요청별 진행 단계와 다음 행동을 확인하고, 대여 중인 장비를 반납할 수 있습니다.</p>
           </div>
           <router-link :to="path('/assets')" class="btn btn-primary">새 대여 신청</router-link>
@@ -121,7 +120,7 @@
                 <dd>{{ dateTime(item.createdAt) }}</dd>
               </div>
               <div v-if="item.course?.pickupLocation">
-                <dt>수령·반납</dt>
+                <dt>수령, 반납</dt>
                 <dd>{{ item.course.pickupLocation }}</dd>
               </div>
             </dl>

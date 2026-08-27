@@ -6,8 +6,6 @@
         <template v-if="isManager">
           <div class="page-heading">
             <div>
-              <span class="eyebrow ai-eyebrow"><AppIcon name="sparkle" :size="14" /> SCIKIT-LEARN DEMAND INTELLIGENCE</span>
-              <h1 class="page-title">관리자용 4주 수요예측</h1>
               <p class="page-subtitle">과거 요청량과 대여기간을 학습해 부족 가능성을 찾고, 이동 검토 또는 도입 요청으로 바로 연결합니다.</p>
             </div>
             <button class="btn btn-primary" :disabled="training || loading" @click="askTraining = true">
@@ -126,7 +124,7 @@
                     :key="suggestion.fromGroupId"
                     :to="transferLink(suggestion, item)"
                   >
-                    {{ groupName(suggestion.fromGroupId) }} · {{ suggestion.suggestedQuantity }}개 확인 →
+                    {{ groupName(suggestion.fromGroupId) }}, {{ suggestion.suggestedQuantity }}개 확인 →
                   </router-link>
                 </div>
                 <div v-else-if="item.shortageUnits > 0" class="recommendation purchase">
@@ -162,9 +160,9 @@
               <div class="model-detail-body">
                 <section class="method">
                   <div><span>1</span><strong>데이터 집계</strong><p>18개월 요청 이벤트를 그룹×카테고리×주 단위로 집계합니다.</p></div>
-                  <div><span>2</span><strong>시간순 분리</strong><p>미래 정보가 학습에 섞이지 않도록 학습·검증·테스트를 나눕니다.</p></div>
+                  <div><span>2</span><strong>시간순 분리</strong><p>미래 정보가 학습에 섞이지 않도록 학습, 검증, 테스트를 나눕니다.</p></div>
                   <div><span>3</span><strong>모델 선택</strong><p>Poisson, Random Forest, Gradient Boosting을 검증 WAPE로 비교합니다.</p></div>
-                  <div><span>4</span><strong>업무 연결</strong><p>예상 수요·대여기간·재고를 결합해 이동 또는 도입을 제안합니다.</p></div>
+                  <div><span>4</span><strong>업무 연결</strong><p>예상 수요, 대여기간, 재고를 결합해 이동 또는 도입을 제안합니다.</p></div>
                 </section>
                 <div v-if="candidateRows.length" class="model-table-wrap" tabindex="0" aria-label="모델 후보 평가표, 가로로 스크롤할 수 있습니다.">
                   <table class="model-table">

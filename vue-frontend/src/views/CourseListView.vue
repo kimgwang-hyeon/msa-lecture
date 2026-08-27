@@ -5,9 +5,9 @@
       <div class="container">
         <div class="page-heading">
           <div>
-            <span class="eyebrow">{{ group?.name || 'GROUP' }} · ASSET CATALOG</span>
+            <span class="eyebrow">{{ group?.name || 'GROUP' }}, ASSET CATALOG</span>
             <h1 class="page-title">대여 자산 찾기</h1>
-            <p class="page-subtitle">학교 공용 자산과 이 그룹의 전용 자산을 재고·종류·대여 조건으로 찾아보세요.</p>
+            <p class="page-subtitle">학교 공용 자산과 이 그룹의 전용 자산을 재고, 종류, 대여 조건으로 찾아보세요.</p>
           </div>
           <div class="heading-actions">
             <router-link v-if="!isManager" :to="path('/acquisitions/new')" class="btn btn-outline">미보유 장비 요청</router-link>
@@ -99,7 +99,7 @@
 
         <div v-if="visibleCourses.length < filteredCourses.length" class="load-more">
           <button class="btn btn-ghost" @click="visibleLimit += 12">
-            자산 더 보기 · {{ filteredCourses.length - visibleCourses.length }}개 남음
+            자산 더 보기, {{ filteredCourses.length - visibleCourses.length }}개 남음
           </button>
         </div>
       </div>
