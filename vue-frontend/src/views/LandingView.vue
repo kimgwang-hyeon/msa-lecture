@@ -11,7 +11,7 @@
             <div class="hero-actions">
               <router-link :to="auth.isAuthenticated ? '/groups' : '/login'" class="btn btn-primary btn-lg">
                 <template v-if="auth.isAuthenticated">내 그룹 들어가기</template>
-                <template v-else><em>U</em>niversal <em>S</em>torag<em>E</em> 시작하기</template>
+                <span v-else class="brand-button-label"><em>U</em>niversal <em>S</em>torag<em>E</em> 시작하기</span>
               </router-link>
               <router-link v-if="auth.isAuthenticated" to="/groups" class="btn btn-outline btn-lg">그룹 선택</router-link>
             </div>
