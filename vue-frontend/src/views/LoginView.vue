@@ -130,7 +130,7 @@ async function handleLogin() {
   padding: 12px 14px;
   color: var(--color-warning);
   background: var(--color-warning-light);
-  border: 1px solid rgba(154, 91, 0, .2);
+  border: 1px solid rgba(37, 99, 235, .2);
   border-radius: var(--radius-md);
   font-size: 13px;
   line-height: 1.55;

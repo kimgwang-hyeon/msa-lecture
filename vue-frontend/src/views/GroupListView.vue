@@ -21,12 +21,10 @@
           <div class="summary-card surface">
             <span class="summary-label">관리 권한</span>
             <strong class="summary-value">{{ managerCount }}</strong>
-            <small>승인·재고·AI 분석 가능</small>
           </div>
           <div class="summary-card surface">
             <span class="summary-label">구성원 권한</span>
             <strong class="summary-value">{{ memberCount }}</strong>
-            <small>대여·반납·도입 요청 가능</small>
           </div>
         </section>
 
@@ -316,7 +314,7 @@ onMounted(load)
   padding: 20px;
   transition: var(--transition);
 }
-.group-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); border-color: #a9c9bd; }
+.group-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); border-color: var(--color-border-hover); }
 .group-card-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .group-symbol {
   width: 48px;
@@ -324,14 +322,14 @@ onMounted(load)
   display: grid;
   place-items: center;
   color: #fff;
-  background: #356d63;
+  background: var(--color-primary);
   border-radius: 14px;
   font-size: 18px;
   font-weight: 800;
 }
-.tone-1 { background: #59746b; }
-.tone-2 { background: #8b6b4d; }
-.tone-3 { background: #4f696f; }
+.tone-1 { background: #3b82f6; }
+.tone-2 { background: #4f72b8; }
+.tone-3 { background: #254f91; }
 .role {
   padding: 5px 8px;
   border-radius: 999px;

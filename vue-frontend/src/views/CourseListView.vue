@@ -10,7 +10,7 @@
             <p class="page-subtitle">학교 공용 자산과 이 그룹의 전용 자산을 재고·종류·대여 조건으로 찾아보세요.</p>
           </div>
           <div class="heading-actions">
-            <router-link :to="path('/acquisitions/new')" class="btn btn-outline">미보유 장비 요청</router-link>
+            <router-link v-if="!isManager" :to="path('/acquisitions/new')" class="btn btn-outline">미보유 장비 요청</router-link>
             <router-link v-if="isManager" :to="path('/assets/new')" class="btn btn-primary">보유 자산 등록</router-link>
           </div>
         </div>
@@ -89,10 +89,11 @@
         <div v-else class="empty-state surface">
           <span class="empty-icon"><AppIcon name="search" :size="30" /></span>
           <strong>조건에 맞는 자산이 없습니다.</strong>
-          <p>필터를 줄이거나 미보유 장비 도입 요청을 시작해 보세요.</p>
+          <p>{{ isManager ? '필터 조건을 줄이거나 새로운 자산을 등록해 보세요.' : '필터를 줄이거나 미보유 장비 도입 요청을 시작해 보세요.' }}</p>
           <div class="empty-actions">
             <button class="btn btn-ghost" @click="clearFilters">필터 초기화</button>
-            <router-link :to="path('/acquisitions/new')" class="btn btn-outline">도입 요청</router-link>
+            <router-link v-if="!isManager" :to="path('/acquisitions/new')" class="btn btn-outline">도입 요청</router-link>
+            <router-link v-else :to="path('/assets/new')" class="btn btn-primary">보유 자산 등록</router-link>
           </div>
         </div>
 
@@ -330,7 +331,7 @@ onMounted(() => {
   color: #fff;
   background: var(--color-primary-dark);
   border-color: var(--color-primary-dark);
-  box-shadow: 0 6px 14px rgba(40, 87, 79, .14);
+  box-shadow: 0 6px 14px rgba(37, 99, 235, .16);
 }
 .result-line {
   min-height: 42px;

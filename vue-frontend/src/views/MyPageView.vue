@@ -142,13 +142,6 @@
               </div>
             </section>
 
-            <section class="principle surface">
-              <span>AGILE + MSA + ML</span>
-              <div>
-                <h2>도메인 흐름은 명확하게, AI는 검증 가능한 관리자 판단에</h2>
-                <p>그룹별 대여 운영과 시간순 모델 평가를 분리해 서비스 설계 의도와 데이터 활용 효과를 함께 보여줍니다.</p>
-              </div>
-            </section>
           </template>
         </section>
       </div>
@@ -270,7 +263,7 @@ onMounted(load)
   padding: 17px;
   transition: var(--transition);
 }
-.quick-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); border-color: #b5d2c8; }
+.quick-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); border-color: var(--color-border-hover); }
 .quick-card > span {
   width: 42px;
   height: 42px;
@@ -345,19 +338,6 @@ onMounted(load)
 .group-list strong { overflow: hidden; font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
 .group-list small, .group-list > p { color: var(--color-text-muted); font-size: 9px; }
 .group-list b { color: var(--color-primary); }
-.principle {
-  display: grid;
-  grid-template-columns: 130px minmax(0, 1fr);
-  gap: 20px;
-  margin-top: 16px;
-  padding: 23px;
-  color: var(--color-text-primary);
-  background: linear-gradient(120deg, #edf5f1, #fbf8f2);
-  border: 1px solid #e2eaf7;
-}
-.principle > span { color: var(--color-ai); font-size: 9px; font-weight: 800; letter-spacing: .1em; }
-.principle h2 { font-size: 14px; }
-.principle p { margin-top: 4px; color: var(--color-text-secondary); font-size: 10px; line-height: 1.55; }
 
 @media (max-width: 980px) {
   .profile-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -369,6 +349,5 @@ onMounted(load)
 }
 @media (max-width: 650px) {
   .profile-summary, .group-list { grid-template-columns: 1fr; }
-  .principle { grid-template-columns: 1fr; }
 }
 </style>

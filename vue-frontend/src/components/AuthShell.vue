@@ -3,8 +3,8 @@
     <div class="auth-atmosphere" aria-hidden="true"></div>
 
     <section class="auth-layout">
-      <aside class="auth-brand-panel" aria-label="GearHub Campus 소개">
-        <router-link to="/" class="auth-brand" aria-label="GearHub Campus 홈">
+      <aside class="auth-brand-panel" aria-label="UniverStroageE 소개">
+        <router-link to="/" class="auth-brand" aria-label="UniverStroageE 홈">
           <GearHubLogo class="auth-brand-logo" aria-hidden="true" />
         </router-link>
 
@@ -66,7 +66,7 @@ const features = [
   place-items: center;
   overflow: hidden;
   padding: 32px;
-  background: #f2f5f3;
+  background: #f3f7fd;
 }
 
 .auth-atmosphere {
@@ -74,8 +74,8 @@ const features = [
   inset: 0;
   pointer-events: none;
   background:
-    radial-gradient(circle at 12% 16%, rgba(53, 109, 99, .11), transparent 34%),
-    radial-gradient(circle at 90% 82%, rgba(73, 116, 102, .09), transparent 30%);
+    radial-gradient(circle at 12% 16%, rgba(37, 99, 235, .12), transparent 34%),
+    radial-gradient(circle at 90% 82%, rgba(59, 130, 246, .09), transparent 30%);
 }
 
 .auth-layout {
@@ -87,7 +87,7 @@ const features = [
   grid-template-columns: minmax(340px, .92fr) minmax(430px, 1.08fr);
   overflow: hidden;
   background: rgba(255, 255, 255, .84);
-  border: 1px solid rgba(194, 208, 201, .72);
+  border: 1px solid rgba(194, 211, 235, .78);
   border-radius: var(--radius-xl);
   box-shadow: var(--shadow-lg);
   backdrop-filter: blur(18px);
@@ -98,9 +98,9 @@ const features = [
   display: flex;
   flex-direction: column;
   background:
-    linear-gradient(145deg, rgba(229, 238, 243, .95), rgba(237, 243, 239, .88)),
-    #eef3f2;
-  border-right: 1px solid rgba(194, 208, 201, .62);
+    linear-gradient(145deg, rgba(229, 238, 252, .96), rgba(239, 245, 255, .9)),
+    #eef4fd;
+  border-right: 1px solid rgba(194, 211, 235, .7);
 }
 
 .auth-brand {
@@ -153,7 +153,7 @@ const features = [
   width: 18px;
   height: 18px;
   flex: 0 0 auto;
-  border: 1px solid rgba(53, 109, 99, .28);
+  border: 1px solid rgba(37, 99, 235, .28);
   border-radius: 50%;
   background: rgba(255, 255, 255, .6);
 }
@@ -229,7 +229,7 @@ const features = [
   .auth-brand-panel {
     padding: 24px 28px;
     border-right: 0;
-    border-bottom: 1px solid rgba(194, 208, 201, .62);
+    border-bottom: 1px solid rgba(194, 211, 235, .7);
   }
 
   .auth-brand-copy {

@@ -67,7 +67,7 @@ const terminalComplete = computed(() => ['RETURNED', 'RECEIVED'].includes(props.
   background: var(--color-border);
 }
 .request-progress li.complete:not(:last-child)::after {
-  background: #86cdb9;
+  background: #79a7e8;
 }
 .step-marker {
   position: relative;
@@ -76,7 +76,7 @@ const terminalComplete = computed(() => ['RETURNED', 'RECEIVED'].includes(props.
   height: 24px;
   display: grid;
   place-items: center;
-  color: #77858f;
+  color: var(--color-text-muted);
   background: #fff;
   border: 2px solid var(--color-border);
   border-radius: 50%;

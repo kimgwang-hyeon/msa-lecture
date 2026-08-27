@@ -2,7 +2,7 @@
   <AuthShell :close-to="loginTarget" close-label="회원가입을 닫고 로그인으로 이동">
     <div class="register-section">
       <h1 class="section-title">회원가입</h1>
-      <p class="section-description">기본 정보를 입력하고 GearHub Campus를 시작하세요.</p>
+      <p class="section-description">기본 정보를 입력하고 UniverStroageE를 시작하세요.</p>
 
       <form class="register-form" :aria-busy="loading" @submit.prevent="handleRegister">
         <div class="form-group">
@@ -253,7 +253,7 @@ onBeforeUnmount(() => {
 .success-message {
   color: var(--color-success);
   background: var(--color-success-light);
-  border: 1px solid rgba(38, 112, 91, .2);
+  border: 1px solid rgba(37, 99, 235, .2);
 }
 
 .submit-button {

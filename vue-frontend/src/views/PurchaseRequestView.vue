@@ -305,7 +305,7 @@ onMounted(async () => {
 }
 .alternative-check.checked {
   background: var(--color-primary-light);
-  border-color: #9acbbb;
+  border-color: #9fbee9;
 }
 .alternative-check input { position: absolute; opacity: 0; }
 .alternative-check:has(input:focus-visible) {
@@ -319,7 +319,7 @@ onMounted(async () => {
   place-items: center;
   color: var(--color-primary);
   background: #fff;
-  border: 1px solid #b9d4ca;
+  border: 1px solid #b9cdeb;
   border-radius: 8px;
   font-size: 11px;
   font-weight: 800;

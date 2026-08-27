@@ -67,7 +67,7 @@ onMounted(async () => {
   flex-direction: column;
   gap: 18px;
   padding: 24px;
-  background: linear-gradient(135deg, #edf5f1, #fbf8f2);
+  background: linear-gradient(135deg, #edf5ff, #f8fbff);
 }
 
 .callback-box {

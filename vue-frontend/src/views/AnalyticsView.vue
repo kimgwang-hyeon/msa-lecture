@@ -29,7 +29,6 @@
               <div>
                 <span>이번 4주 운영 요약</span>
                 <h2>{{ decisionBrief }}</h2>
-                <p>모델 결과는 구매 결론이 아니라 관리자가 재고 이동과 도입 필요성을 비교하기 위한 근거입니다.</p>
               </div>
               <small>생성 {{ trainedAt }}</small>
             </section>
@@ -358,8 +357,8 @@ onMounted(load)
   margin-bottom: 14px;
   padding: 20px;
   color: var(--color-text-primary);
-  background: linear-gradient(125deg, rgba(233, 243, 239, .94), rgba(252, 248, 241, .9));
-  border: 1px solid #d7e3de;
+  background: linear-gradient(125deg, rgba(234, 242, 255, .96), rgba(247, 250, 255, .94));
+  border: 1px solid #d4e2f5;
 }
 .brief-icon {
   width: 48px;
@@ -498,7 +497,7 @@ onMounted(load)
   display: block;
   width: min(32px, 65%);
   min-height: 7px;
-  background: linear-gradient(#6f988e, #356d63);
+  background: linear-gradient(#60a5fa, #2563eb);
   border-radius: 5px 5px 0 0;
   transition: .4s;
 }

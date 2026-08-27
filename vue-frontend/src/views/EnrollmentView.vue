@@ -291,7 +291,7 @@ onMounted(load)
 }
 .request-summary button.active {
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(53, 109, 99, .08);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, .08);
 }
 .summary-icon {
   width: 38px;

@@ -103,12 +103,12 @@
               <div><strong>자산 카탈로그</strong><p>재고와 대여 조건을 비교합니다.</p></div>
               <b aria-hidden="true">→</b>
             </router-link>
-            <router-link :to="path('/loans')" class="module surface">
+            <router-link v-if="!isManager" :to="path('/loans')" class="module surface">
               <span class="module-icon blue"><AppIcon name="swap" :size="23" /></span>
               <div><strong>내 대여·도입 요청</strong><p>승인과 반납 상태를 추적합니다.</p></div>
               <b aria-hidden="true">→</b>
             </router-link>
-            <router-link :to="path('/acquisitions/new')" class="module surface">
+            <router-link v-if="!isManager" :to="path('/acquisitions/new')" class="module surface">
               <span class="module-icon amber"><AppIcon name="plus" :size="23" /></span>
               <div><strong>미보유 장비 요청</strong><p>필요성과 예상 비용을 제출합니다.</p></div>
               <b aria-hidden="true">→</b>
@@ -321,7 +321,7 @@ onMounted(load)
   gap: 24px;
   padding: 30px;
   margin-bottom: 16px;
-  background: linear-gradient(125deg, #fff 52%, #e8f5f1);
+  background: linear-gradient(125deg, #fff 52%, #eaf2ff);
 }
 .hero-copy h1 {
   color: var(--color-navy);
@@ -366,7 +366,7 @@ onMounted(load)
   padding: 9px 14px;
   color: var(--color-primary);
   background: #fff;
-  border: 1px dashed #85b9a8;
+  border: 1px dashed #8eb4ea;
   border-radius: 9px;
   font-size: 13px;
   font-weight: 800;
@@ -529,14 +529,14 @@ onMounted(load)
 .blue { color: var(--color-info); background: var(--color-info-light); }
 .amber { color: var(--color-warning); background: var(--color-warning-light); }
 .purple { color: var(--color-primary-dark); background: var(--color-primary-light); }
-.dark { color: var(--color-navy); background: #e9efec; }
+.dark { color: var(--color-navy); background: #e7effb; }
 .module strong { color: var(--color-navy); font-size: 13px; }
 .module p { margin-top: 3px; color: var(--color-text-muted); font-size: 10px; }
 .module b { color: var(--color-primary); }
 .ai-module {
   color: var(--color-text-primary);
-  background: linear-gradient(130deg, rgba(232, 241, 237, .94), rgba(252, 248, 241, .92));
-  border: 1px solid #d3e0da;
+  background: linear-gradient(130deg, rgba(234, 242, 255, .96), rgba(247, 250, 255, .94));
+  border: 1px solid #d2e1f5;
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-sm);
 }

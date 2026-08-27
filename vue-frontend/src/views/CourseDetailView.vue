@@ -288,8 +288,8 @@ onMounted(load)
   min-height: 260px;
   display: grid;
   place-items: center;
-  color: rgba(40, 87, 79, .76);
-  background: linear-gradient(145deg, #e9f3ef, #f4f1e9);
+  color: rgba(29, 78, 216, .78);
+  background: linear-gradient(145deg, #eaf2ff, #f4f7fd);
   border-radius: var(--radius-xl);
   overflow: hidden;
 }
@@ -397,7 +397,7 @@ onMounted(load)
   font-size: 9px;
   line-height: 1.5;
 }
-.loan-guide i { color: #a7b4ae; }
+.loan-guide i { color: #8399b9; }
 .request-panel {
   position: sticky;
   top: 90px;

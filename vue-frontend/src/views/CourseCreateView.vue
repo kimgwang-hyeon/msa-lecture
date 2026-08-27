@@ -343,12 +343,12 @@ onMounted(async () => {
 }
 .scope-options label.selected {
   background: var(--color-primary-light);
-  border-color: #8fc2b2;
-  box-shadow: 0 0 0 2px rgba(53, 109, 99, .08);
+  border-color: #8eb4ea;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, .08);
 }
 .scope-options input { position: absolute; opacity: 0; pointer-events: none; }
 .scope-options label:has(input:focus-visible) {
-  outline: 3px solid rgba(53, 109, 99, .22);
+  outline: 3px solid rgba(37, 99, 235, .22);
   outline-offset: 2px;
 }
 .scope-options label > span {

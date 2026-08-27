@@ -4,7 +4,7 @@
       <router-link
         :to="auth.isAuthenticated ? '/groups' : '/'"
         class="brand"
-        aria-label="GearHub Campus 홈"
+        aria-label="UniverStroageE 홈"
       >
         <GearHubLogo />
       </router-link>
@@ -14,7 +14,7 @@
         <template v-if="groupId">
           <router-link :to="groupPath('')" class="nav-link" exact-active-class="router-link-active">홈</router-link>
           <router-link :to="groupPath('/assets')" class="nav-link">자산 찾기</router-link>
-          <router-link :to="groupPath('/loans')" class="nav-link">내 요청</router-link>
+          <router-link v-if="!isManager" :to="groupPath('/loans')" class="nav-link">내 요청</router-link>
           <router-link v-if="isManager" :to="groupPath('/admin')" class="nav-link">운영 데스크</router-link>
           <router-link v-if="isManager" :to="groupPath('/analytics')" class="nav-link ai-link"><AppIcon name="sparkle" :size="14" />AI 수요예측</router-link>
         </template>
@@ -77,7 +77,7 @@
             <template v-if="groupId">
               <router-link :to="groupPath('')">그룹 홈</router-link>
               <router-link :to="groupPath('/assets')">자산 찾기</router-link>
-              <router-link :to="groupPath('/loans')">내 요청</router-link>
+              <router-link v-if="!isManager" :to="groupPath('/loans')">내 요청</router-link>
               <router-link v-if="isManager" :to="groupPath('/admin')">운영 데스크</router-link>
               <router-link v-if="isManager" :to="groupPath('/analytics')">AI 수요예측</router-link>
             </template>
@@ -158,7 +158,7 @@ watch(() => route.fullPath, () => {
   top: 0;
   z-index: 100;
   background: rgba(255, 255, 255, .96);
-  border-bottom: 1px solid rgba(213, 225, 220, .9);
+  border-bottom: 1px solid rgba(207, 220, 239, .92);
   backdrop-filter: blur(16px);
 }
 .header-inner {
@@ -203,10 +203,10 @@ watch(() => route.fullPath, () => {
 }
 .group-select {
   max-width: 170px;
-  height: 38px;
+  height: 40px;
   padding: 0 30px 0 11px;
   color: var(--color-text-secondary);
-  background: #f5f8f6;
+  background: var(--color-bg-secondary);
   border: 1px solid var(--color-border);
   border-radius: 10px;
   font-size: 12px;
@@ -215,8 +215,15 @@ watch(() => route.fullPath, () => {
 .profile-link {
   display: flex;
   align-items: center;
-  gap: 7px;
+  gap: 8px;
+  height: 40px;
+  padding: 3px 4px 3px 11px;
+  background: #fff;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  transition: var(--transition);
 }
+.profile-link:hover { color: var(--color-primary); border-color: var(--color-border-hover); background: var(--color-primary-light); }
 .role-pill {
   color: var(--color-primary);
   font-size: 11px;
@@ -228,8 +235,8 @@ watch(() => route.fullPath, () => {
   display: grid;
   place-items: center;
   color: #fff;
-  background: var(--color-navy);
-  border-radius: 11px 11px 4px 11px;
+  background: var(--color-primary);
+  border-radius: 9px;
   font-size: 12px;
   font-weight: 800;
 }

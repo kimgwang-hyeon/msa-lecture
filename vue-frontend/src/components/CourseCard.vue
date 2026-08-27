@@ -72,15 +72,15 @@ const availabilityLabel = computed(() => available.value > 0 ? `${available.valu
   align-items: flex-start;
   justify-content: space-between;
   padding: 15px;
-  background: linear-gradient(145deg, #edf4f1, #e5eeea);
+  background: linear-gradient(145deg, #f1f6ff, #e4edfb);
 }
-.tone-computer { background: linear-gradient(145deg, #edf3f2, #e3ece9); }
-.tone-camera-audio { background: linear-gradient(145deg, #f5f1eb, #eee6dc); }
-.tone-presentation { background: linear-gradient(145deg, #faf3e9, #f2e5d4); }
-.tone-maker { background: linear-gradient(145deg, #f2f1eb, #e8e8df); }
-.tone-electronics-iot { background: linear-gradient(145deg, #eaf4f1, #dcebe5); }
-.tone-device { background: linear-gradient(145deg, #eef4f2, #e2ece8); }
-.tone-accessory { background: linear-gradient(145deg, #f2f3ef, #e6e9e2); }
+.tone-computer { background: linear-gradient(145deg, #eef5ff, #dfeafb); }
+.tone-camera-audio { background: linear-gradient(145deg, #f3f7ff, #e5edfa); }
+.tone-presentation { background: linear-gradient(145deg, #edf4ff, #dae8fc); }
+.tone-maker { background: linear-gradient(145deg, #f0f5fd, #e0e9f7); }
+.tone-electronics-iot { background: linear-gradient(145deg, #eaf3ff, #d9e8fc); }
+.tone-device { background: linear-gradient(145deg, #eef5ff, #dfeafa); }
+.tone-accessory { background: linear-gradient(145deg, #f2f6fc, #e4ebf6); }
 .category-mark {
   align-self: center;
   display: flex;
